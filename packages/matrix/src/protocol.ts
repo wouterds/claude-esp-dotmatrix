@@ -9,9 +9,9 @@ export const FRAME_BYTES = LED_COUNT * 3;
 export const MAX_BRIGHTNESS = 96;
 
 // Low, because this sits an arm's length away rather than across a room. 48 was
-// reported as "I'm blind" at that distance and 10 as comfortable, so the working
-// range is around ten and the ceiling is for a bright room, not for normal use.
-export const DEFAULT_BRIGHTNESS = 10;
+// reported as "I'm blind" at that distance and 15 as comfortable across the whole
+// panel, so the ceiling above is for a bright room rather than for normal use.
+export const DEFAULT_BRIGHTNESS = 15;
 
 const MAGIC_0 = 0xc1;
 const MAGIC_1 = 0xa0;

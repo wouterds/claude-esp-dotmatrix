@@ -72,8 +72,9 @@ that it is colour and not geometry is a colour appearing that was never sent.
 
 ## Brightness
 
-Around **10**. 48 is genuinely blinding at desk distance and 10 is comfortable,
-so the ceiling of 96 exists for a bright room rather than for use.
+Around **15**. 48 is genuinely blinding at desk distance and 15 is comfortable
+lit across the whole panel, so the ceiling of 96 exists for a bright room rather
+than for use.
 
 ## Power
 

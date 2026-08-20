@@ -75,14 +75,16 @@ that pixel is the only way it can say both at once.
 
 ## Several sessions at once
 
-Every session reports itself, and the panel speaks for **whichever the user typed
-into most recently** - not the busiest one. Two sessions grinding both fire hooks
-several times a second, so ranking on activity would flicker between them.
+Every session reports itself, and the panel speaks for **the one the user last
+sent a message to**. Nothing else moves it - not activity, not how busy something
+is. A hand-over plays a full-screen arrow in a random colour, so a switch is seen
+rather than noticed afterwards.
 
 A session stops counting once it goes quiet: ninety seconds for anything active,
 half an hour for `waiting` (nothing changes there until the user acts), five
-minutes for `error`. When none are left the panel goes idle rather than holding
-the last thing it saw.
+minutes for `error`. When the messaged session goes quiet the panel goes **idle**
+rather than handing over to whatever else is running - that would be a switch
+nobody asked for.
 
 `npx status-show` lists them, newest first, and marks the one being spoken for.
 That is the command for "which of my four sessions needs me".
