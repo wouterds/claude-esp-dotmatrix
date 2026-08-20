@@ -46,19 +46,21 @@ export type FaceOptions = {
   blink?: boolean;
   /** Shifts the eyes sideways, for a glance. */
   glance?: number;
+  /** Shifts the whole face vertically, for a bob. */
+  bob?: number;
 };
 
 export const drawFace = (
   frame: Frame,
   mood: Mood,
   color: Color,
-  { blink = false, glance = 0 }: FaceOptions = {},
+  { blink = false, glance = 0, bob = 0 }: FaceOptions = {},
 ) => {
   const face = FACES[mood];
   const eyes = blink ? EYES.closed : EYES[face.eyes];
 
-  drawGlyph(frame, eyes, color, glance, EYE_ROW);
+  drawGlyph(frame, eyes, color, glance, EYE_ROW + bob);
   // The mouth sits a shade under the eyes so they read as the focal point on a
   // panel where every pixel is the same size.
-  drawGlyph(frame, MOUTHS[face.mouth], scale(color, 0.7), 0, MOUTH_ROW);
+  drawGlyph(frame, MOUTHS[face.mouth], scale(color, 0.7), 0, MOUTH_ROW + bob);
 };
