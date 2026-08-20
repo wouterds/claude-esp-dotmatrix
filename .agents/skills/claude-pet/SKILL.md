@@ -51,8 +51,10 @@ nohup npx tsx apps/daemon/src/index.ts >> ~/.claude-status/daemon.log 2>&1 &
 
 ## What it is showing
 
-Read the panel as two things at once. The face is how the session is going; the
-bottom row is how much window is left, and that row is never anything else.
+Read the panel as three things. Row 0 is how far through the rolling session
+window; the six rows between are the face; row 7 is how much context is left.
+Both bars are numbers - the spinner crossing them can brighten them, never
+shorten them.
 
 | status | on the panel |
 | --- | --- |
@@ -65,9 +67,20 @@ bottom row is how much window is left, and that row is never anything else.
 | `error` | red, flashing, eyebrows down |
 | `done` | green, a tick, then a smile |
 
-Mood comes from how full the window is rather than from what is happening: past
-three quarters it looks tired, past 95% it gives out. That is the reading the
-gauge and the face agree on.
+Mood comes from how full the context window is rather than from what is
+happening: past three quarters it looks tired, past 95% it gives out.
+
+The eyes are all one motif - a cross, and halves of it. Full crosses awake, the
+bottom half (two carets) content, the top half drooping, a brow over it cross,
+and one cross across the whole face for done for. Five shapes for seven moods on
+purpose: the status already carries its own colour, so the eyes only have to say
+how the session feels.
+
+The context gauge is banded: green to 40%, yellow to 60%, orange to 80%, red
+beyond. The session-window bar is cool blue and never reddens - elapsed time is
+information, not a warning. **The real session-window percentage cannot be read
+locally**; `/usage` fetches it from the API and nothing caches it, so the bar
+shows time through the window instead, which is exact.
 
 **One pulsing pixel in the top right corner** means a *different* session is
 blocked on the user. The panel is already saying what this session is doing;

@@ -80,9 +80,14 @@ Invisible in the code until they are broken.
 - **The daemon validates; the writers do not.** `state.json` is hand editable and
   hook written, so every field is checked on read. That is what makes it safe for
   the hook to stay dumb
-- **Row 7 is the token gauge and nothing else may light it.** A spec holds every
-  status accent out of it. A trail crossing the gauge makes the number read high,
-  and that number is the one thing on this panel that has to be true
+- **Rows 0 and 7 are numbers, and an accent may only ever brighten them.** The
+  session window is on top, the context gauge on the bottom, and the spinner
+  crosses both on purpose. A spec holds the invariant that nothing shortens a
+  bar - one that something could eat into would read as a smaller number, and
+  those two rows are the only things here that have to be true
+- **The face is the six rows between the bars, and its eyes are top-aligned.**
+  Centred on the face rows they still read as low, because an eye takes the
+  panel's centre for the face's centre
 - **Scenes are pure functions of time and state.** No scene carries anything
   between frames - the twinkle is hashed from the pixel and the step rather than
   from `Math.random` - which is why a spec can assert what was drawn

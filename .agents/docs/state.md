@@ -72,6 +72,34 @@ being worked in, one pulsing corner pixel for a *different* session that is
 waiting. When the session being shown is itself waiting, the panel already says
 so and the pip is not drawn.
 
+## The two bars
+
+Row 0 and row 7 are numbers, not decoration, and the face has the six rows
+between them.
+
+| | |
+| --- | --- |
+| row 0 | how far through the rolling **session window** - cool blue, never reddens |
+| row 7 | how full the **context window** is - green to 40%, yellow to 60%, orange to 80%, red beyond |
+
+The gauge is banded rather than a gradient because "it is orange" is a faster read
+than "it is somewhere between amber and orange". Both bars dim their leading pixel
+by the fraction of it in use, so each has eight times the resolution its eight
+pixels suggest.
+
+**The session window figure cannot be read locally.** What `/usage` reports is
+fetched from the API and cached nowhere on disk - not in `stats-cache.json`, not in
+`policy-limits.json`, not in the transcripts, whose only related field is
+`service_tier`. So the bar shows what *is* exactly knowable: how far through the
+window we are, derived from message timestamps. A window anchors on the first
+message of an unbroken run and then tiles forward, so a twelve hour stretch is the
+third window rather than one long overrun.
+
+**An accent may brighten a bar; it may never shorten one.** The spinner crosses
+the whole edge, both bars included, and is drawn after them so it passes over
+rather than behind. A spec holds the invariant, because a bar something could eat
+into would read as a smaller number.
+
 ## The window
 
 Read from the transcript of the session being shown, not from whichever
