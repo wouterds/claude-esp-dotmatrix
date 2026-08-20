@@ -116,9 +116,15 @@ window of the session being shown, so it still behaves like the chat you are in;
 these two are the same figures in every chat, which is what lets a row show one
 without having to say whose it is.
 
-A quota nothing has reported stays **dark rather than empty**. A row defaulting to
-empty would read as "none of the week used", which is the one wrong answer here
-that looks like good news.
+A quota nothing has reported stays **dark**, and a bar is never shorter than **one
+pixel**. Those two together are what make a dark row mean one thing: a row
+defaulting to empty would read as "none of the week used", which is the one wrong
+answer here that looks like good news - and without the floor, a window that has
+just reset and a statusline that has never fired would draw the same blank row.
+
+The floor costs the sub-pixel dimming below an eighth, so anything under 12.5%
+reads as one whole pixel rather than a dim one. Worth it: "barely started" is the
+only thing that range has to say, and it is the range a fresh window sits in.
 
 **An accent may brighten a bar; it may never shorten one.** The spinner crosses the
 whole edge, both rows included, and is drawn after them so it passes over rather

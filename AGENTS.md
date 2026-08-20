@@ -91,7 +91,8 @@ Invisible in the code until they are broken.
   window of the session being shown, so it still behaves like the chat you are
   in. The two quotas are the same figures in every chat, which is what lets a row
   show one without saying whose it is. A quota nothing has reported stays dark
-  rather than empty - "none of the week used" is the one wrong answer that looks
+  and a bar is never shorter than one pixel, so a dark row means "no reading"
+  and nothing else - "none of the week used" is the one wrong answer that looks
   like good news
 - **`rate_limits` reaches a statusline and nothing else.** No hook payload
   carries it, it never lands in a transcript, and nothing caches it on disk, so

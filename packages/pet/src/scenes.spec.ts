@@ -38,11 +38,26 @@ const litInRow = (frame: ReturnType<typeof createFrame>, y: number) => {
 const MOMENTS = [0, 0.17, 0.4, 0.63, 0.9, 1.3, 2.1, 3.4, 5.5, 7.9, 11.3];
 
 describe("drawBar", () => {
-  it("lights nothing on an untouched quota", () => {
+  // Dark means "nothing has reported this", and only that. An empty quota is a
+  // fact worth showing, so it gets the smallest bar there is rather than the
+  // same blank row as no reading at all.
+  it("still lights one pixel on an untouched quota, and it is green", () => {
     const frame = createFrame();
     drawBar(frame, FIVE_HOUR_ROW, 0);
 
-    expect(litInRow(frame, FIVE_HOUR_ROW)).toEqual([]);
+    expect(litInRow(frame, FIVE_HOUR_ROW)).toEqual([0]);
+
+    const [red, green] = frame.get(0, FIVE_HOUR_ROW);
+    expect(green).toBeGreaterThan(red);
+  });
+
+  it("never drops below that one pixel, however small the figure", () => {
+    for (const used of [0, 0.0001, 0.01, 0.05, 0.124]) {
+      const frame = createFrame();
+      drawBar(frame, FIVE_HOUR_ROW, used);
+
+      expect(litInRow(frame, FIVE_HOUR_ROW), `used ${used}`).toEqual([0]);
+    }
   });
 
   it("fills the row at the top of the quota", () => {
@@ -59,13 +74,15 @@ describe("drawBar", () => {
     expect(litInRow(frame, FIVE_HOUR_ROW)).toEqual([0, 1, 2, 3]);
   });
 
+  // Measured on the second pixel rather than the first, because the first is
+  // held at a whole pixel by the floor above and so has nothing left to dim.
   it("dims the leading pixel by the fraction of it in use", () => {
     const half = createFrame();
     const full = createFrame();
-    drawBar(half, FIVE_HOUR_ROW, 0.0625);
-    drawBar(full, FIVE_HOUR_ROW, 0.125);
+    drawBar(half, FIVE_HOUR_ROW, 0.1875);
+    drawBar(full, FIVE_HOUR_ROW, 0.25);
 
-    expect(half.get(0, FIVE_HOUR_ROW)[1]).toBeLessThan(full.get(0, FIVE_HOUR_ROW)[1]);
+    expect(half.get(1, FIVE_HOUR_ROW)[1]).toBeLessThan(full.get(1, FIVE_HOUR_ROW)[1]);
   });
 
   it("stays green through the first half and reddens after three quarters", () => {
@@ -122,6 +139,22 @@ describe("drawGauges", () => {
 
     expect(litInRow(frame, FIVE_HOUR_ROW)).toEqual([]);
     expect(litInRow(frame, WEEKLY_ROW)).toEqual([]);
+  });
+
+  // The pair that makes a dark row unambiguous: nothing reported draws nothing,
+  // reported-and-empty draws the one pixel. Without the second, a fresh window
+  // and a broken statusline are the same picture.
+  it("tells an empty quota apart from an unknown one", () => {
+    const empty = createFrame();
+    drawGauges(empty, { ...stateAt(0.5), fiveHour: 0, sevenDay: 0 });
+
+    const unknown = createFrame();
+    drawGauges(unknown, { ...stateAt(0.5), fiveHour: null, sevenDay: null });
+
+    expect(litInRow(empty, FIVE_HOUR_ROW)).toEqual([0]);
+    expect(litInRow(empty, WEEKLY_ROW)).toEqual([0]);
+    expect(litInRow(unknown, FIVE_HOUR_ROW)).toEqual([]);
+    expect(litInRow(unknown, WEEKLY_ROW)).toEqual([]);
   });
 
   it("draws the one it knows when the other is missing", () => {

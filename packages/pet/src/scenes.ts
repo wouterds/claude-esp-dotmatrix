@@ -88,7 +88,11 @@ const BORDER: readonly [number, number][] = (() => {
 
 export const drawBar = (frame: Frame, row: number, used: number) => {
   const clamped = Math.max(0, Math.min(1, used));
-  const lit = clamped * WIDTH;
+  // Never fewer than one pixel. A known quota that happens to be empty has to
+  // look different from one nothing has reported, and dark is already taken by
+  // the second - so a fresh window reads as one green pixel rather than as a
+  // row that might mean either.
+  const lit = Math.max(1, clamped * WIDTH);
   const band = GAUGE_BANDS.find((candidate) => clamped <= candidate.upTo) ?? GAUGE_BANDS[3];
   const color = band.color;
 
