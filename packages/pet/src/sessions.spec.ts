@@ -36,16 +36,19 @@ describe("isLive", () => {
 });
 
 describe("pickSession", () => {
-  it("speaks for whichever session was heard from last", () => {
-    const picked = pickSession([at(60, "thinking", "old"), at(2, "working", "new")], NOW);
+  it("speaks for the session the user last sent a message to", () => {
+    const older = at(2, "working", "older", 600);
+    const latest = at(60, "thinking", "latest", 20);
 
-    expect(picked?.id).toBe("new");
+    // `older` is far more recently active; `latest` was messaged more recently.
+    expect(pickSession([older, latest], NOW)?.id).toBe("latest");
   });
 
-  it("does not let a parked prompt outrank the session being worked in", () => {
-    const picked = pickSession([at(1_200, "waiting", "parked"), at(3, "working", "active")], NOW);
+  it("shows a parked prompt when that is where the last message went", () => {
+    const parked = at(1_200, "waiting", "parked", 1_200);
+    const busy = at(3, "working", "busy", 4_000);
 
-    expect(picked?.id).toBe("active");
+    expect(pickSession([parked, busy], NOW)?.id).toBe("parked");
   });
 
   it("ignores anything stale, so an abandoned session stops speaking", () => {
@@ -75,18 +78,26 @@ describe("pickSession", () => {
     }
   });
 
-  it("hands the panel over once the session being worked in goes quiet", () => {
+  it("never lets a session with no message take the panel off one with a message", () => {
+    const spoken = at(30, "thinking", "spoken", 30);
+    const neverSpoken = at(0, "working", "silent");
+
+    expect(pickSession([neverSpoken, spoken], NOW)?.id).toBe("spoken");
+  });
+
+  it("goes idle rather than handing over when the messaged session goes quiet", () => {
     const busy = at(1, "working", "busy", 600);
     const abandoned = at(400, "thinking", "abandoned", 20);
 
-    expect(pickSession([busy, abandoned], NOW)?.id).toBe("busy");
+    // `abandoned` had the last message, and it has gone stale. Switching to
+    // `busy` would be a switch the user never asked for.
+    expect(pickSession([busy, abandoned], NOW)).toBeNull();
   });
 
-  it("falls back to activity for a session whose hooks were wired mid-flight", () => {
-    const noPrompt = at(1, "working", "fresh");
-    const older = at(30, "thinking", "older", 30);
+  it("falls back to activity only when nothing has been spoken to at all", () => {
+    const neither = [at(1, "working", "a"), at(30, "thinking", "b")];
 
-    expect(pickSession([noPrompt, older], NOW)?.id).toBe("fresh");
+    expect(pickSession(neither, NOW)?.id).toBe("a");
   });
 });
 

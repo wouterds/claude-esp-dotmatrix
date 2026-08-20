@@ -74,26 +74,35 @@ export const readSessions = async (): Promise<SessionSnapshot[]> => {
 const engagedAt = (snapshot: SessionSnapshot) => snapshot.spokenAt ?? snapshot.at;
 
 /**
- * The session the panel speaks for: of the ones still live, whichever the user
- * typed into most recently.
+ * The session the panel speaks for: **the one the user last sent a message to**,
+ * and nothing else moves it.
  *
- * Ranking on plain activity instead makes two busy sessions fight - both fire
- * hooks several times a second, so the panel flickers between two statuses and
- * settles on neither. The last prompt is a stable key: it does not move while a
- * session grinds, so the session being worked in keeps the panel until the user
- * moves, and the other drops out on its own once it goes quiet.
+ * Only a prompt switches sessions. Ranking on activity instead means the panel
+ * follows whatever is busiest, which is both wrong - the session being watched
+ * is the one just typed into, not the one making the most noise - and unstable:
+ * two grinding sessions each fire hooks several times a second, so the panel
+ * flickers between them and settles on neither.
  *
- * Still recency rather than priority. A session parked on a prompt must not stop
- * the panel showing the one being worked in - `attentionElsewhere` covers that.
+ * It still stops speaking once it goes quiet. What it does *not* do is hand over
+ * to a different session at that point, because that would be a switch nobody
+ * asked for - the panel goes idle instead.
  */
 export const pickSession = (
   snapshots: readonly SessionSnapshot[],
   now: number,
 ): SessionSnapshot | null => {
-  const live = snapshots.filter((snapshot) => isLive(snapshot, now));
-  if (live.length === 0) return null;
+  // A session whose hooks were wired mid-flight has no prompt recorded. Those
+  // compete only when nothing has been spoken to at all, so one of them cannot
+  // take the panel off a session the user actually typed into.
+  const spoken = snapshots.filter((snapshot) => snapshot.spokenAt !== null);
+  const pool = spoken.length > 0 ? spoken : snapshots;
+  if (pool.length === 0) return null;
 
-  return live.reduce((best, snapshot) => (engagedAt(snapshot) > engagedAt(best) ? snapshot : best));
+  const chosen = pool.reduce((best, snapshot) =>
+    engagedAt(snapshot) > engagedAt(best) ? snapshot : best,
+  );
+
+  return isLive(chosen, now) ? chosen : null;
 };
 
 /**

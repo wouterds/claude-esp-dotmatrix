@@ -27,18 +27,26 @@ panel showing the one actually being worked in.
 
 ## Which live session speaks
 
-Ranked on the **last user prompt**, not on the last activity. Two sessions
-grinding at once both fire hooks several times a second, so ranking on activity
-makes the panel flicker between two statuses and settle on neither.
+**The one the user last sent a message to. Nothing else moves it.**
 
-The last prompt is a stable key. It does not move while a session works, so the
-session being worked in keeps the panel until the user moves - and the other one
-drops out on its own once it goes quiet, because *liveness* is still activity.
-Two clocks, two jobs: `at` decides whether a session still counts, `spokenAt`
-decides which of the ones that count gets the panel.
+Not activity. Activity means the panel follows whatever is busiest, which is both
+wrong - the session being watched is the one just typed into, not the one making
+the most noise - and unstable: two grinding sessions each fire hooks several
+times a second, so the panel flickers between them and settles on neither.
 
-A session whose hooks were wired mid-flight has no prompt recorded, and falls
-back to activity rather than being ignored.
+Two clocks doing two jobs. `spokenAt` decides which session gets the panel;
+`at` decides whether it still counts at all.
+
+When the messaged session goes quiet the panel goes **idle** rather than handing
+over to whatever else is running. Handing over would be a switch nobody asked
+for, and the whole point of the rule is that switches are deliberate.
+
+A session whose hooks were wired mid-flight has no prompt recorded. Those compete
+only when nothing has been spoken to at all, so one can never take the panel off
+a session the user actually typed into.
+
+A hand-over plays a **full-screen arrow** in a colour picked per playing, so a
+switch is something seen rather than something noticed after the fact.
 
 ## Why a session expires
 
