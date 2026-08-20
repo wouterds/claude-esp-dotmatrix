@@ -19,8 +19,9 @@ export {
   DEFAULT_DESIRE,
   type Desire,
   home,
+  pidFile,
   readDesire,
   stateFile,
   writeDesire,
 } from "./store";
-export { CONTEXT_LIMIT, findLatestTranscript, readUsage, type Usage } from "./usage";
+export { CONTEXT_LIMIT, findLatestTranscript, limitFor, readUsage, type Usage } from "./usage";

@@ -17,6 +17,10 @@ export const home = () => process.env.CLAUDE_STATUS_HOME ?? join(homedir(), ".cl
 
 export const stateFile = () => join(home(), "state.json");
 
+// Beside the state rather than in the daemon, because the tools report on the
+// daemon and both sides would otherwise carry their own idea of where it is.
+export const pidFile = () => join(home(), "daemon.pid");
+
 export type Cell = [x: number, y: number, color: string];
 
 export type Desire = {

@@ -1,8 +1,5 @@
 import { mkdir, readFile, unlink, writeFile } from "node:fs/promises";
-import { join } from "node:path";
-import { home } from "@claude-status/pet";
-
-const pidFile = () => join(home(), "daemon.pid");
+import { home, pidFile } from "@claude-status/pet";
 
 const isRunning = (pid: number) => {
   try {
