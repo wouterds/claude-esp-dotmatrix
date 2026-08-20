@@ -7,8 +7,11 @@ import {
   createDirector,
   type Desire,
   findLatestTranscript,
+  type Limits,
+  NO_LIMITS,
   pickSession,
   readDesire,
+  readLimits,
   readSessions,
   readUsage,
   resolveState,
@@ -74,10 +77,12 @@ run(async () => {
   let desire: Desire = await readDesire();
   let snapshots: SessionSnapshot[] = [];
   let reading = { tokens: 0, fill: 0 };
+  let limits: Limits = NO_LIMITS;
 
   const refresh = async () => {
     desire = await readDesire();
     snapshots = await readSessions();
+    limits = await readLimits(Date.now());
 
     // The session being shown, so the gauge belongs to the face above it.
     const shown = pickSession(snapshots, Date.now());
@@ -104,7 +109,7 @@ run(async () => {
       }
 
       const frame = createFrame();
-      const { state } = resolveState(desire, snapshots, reading, Date.now());
+      const { state } = resolveState(desire, snapshots, reading, limits, Date.now());
 
       if (options.antic) {
         const scene = anticNamed(options.antic)!;

@@ -5,8 +5,11 @@ import {
   DEFAULT_DESIRE,
   type Desire,
   findLatestTranscript,
+  type Limits,
+  NO_LIMITS,
   pruneSessions,
   readDesire,
+  readLimits,
   readSessions,
   readUsage,
   resolveState,
@@ -19,6 +22,9 @@ const FPS = Number(process.env.CLAUDE_STATUS_FPS ?? 40);
 const DESIRE_INTERVAL = 120;
 const SESSION_INTERVAL = 300;
 const USAGE_INTERVAL = 2_000;
+// A quota moves by a point every few minutes, so this is about noticing the
+// statusline's last write rather than about keeping up with anything.
+const LIMITS_INTERVAL = 2_000;
 const RECONNECT_INTERVAL = 2_000;
 const PRUNE_INTERVAL = 5 * 60_000;
 
@@ -36,6 +42,7 @@ let matrix: Matrix | null = null;
 let connecting = false;
 let desire: Desire = DEFAULT_DESIRE;
 let usage: Usage = { tokens: 0, fill: 0, limit: CONTEXT_LIMIT };
+let limits: Limits = NO_LIMITS;
 let snapshots: SessionSnapshot[] = [];
 let session: SessionSnapshot | null = null;
 let anticAt: number | null = null;
@@ -81,6 +88,13 @@ const pollSessions = async () => {
   snapshots = await readSessions();
 };
 
+// Written by the statusline, which is the only thing Claude Code hands the rate
+// limits to. Nothing here waits on it: with no statusline wired the quotas stay
+// unknown and their rows stay dark, and the rest of the panel carries on.
+const pollLimits = async () => {
+  limits = await readLimits(Date.now());
+};
+
 const pollUsage = async () => {
   // The session being shown, so the gauge belongs to the face above it. Falling
   // back to the newest transcript covers a session whose hooks are not wired.
@@ -115,7 +129,7 @@ const render = () => {
       }
     }
   } else {
-    const resolved = resolveState(desire, snapshots, usage, Date.now());
+    const resolved = resolveState(desire, snapshots, usage, limits, Date.now());
 
     // A sweep when the panel changes hands, so a switch is something you see
     // rather than something you notice the aftermath of. Only on a move between
@@ -140,7 +154,7 @@ const main = async () => {
   }
 
   await pruneSessions(Date.now());
-  await Promise.all([pollDesire(), pollSessions()]);
+  await Promise.all([pollDesire(), pollSessions(), pollLimits()]);
   await pollUsage();
   await connect();
 
@@ -149,6 +163,7 @@ const main = async () => {
     setInterval(pollDesire, DESIRE_INTERVAL),
     setInterval(pollSessions, SESSION_INTERVAL),
     setInterval(pollUsage, USAGE_INTERVAL),
+    setInterval(pollLimits, LIMITS_INTERVAL),
     setInterval(connect, RECONNECT_INTERVAL),
     setInterval(() => pruneSessions(Date.now()), PRUNE_INTERVAL),
   ];

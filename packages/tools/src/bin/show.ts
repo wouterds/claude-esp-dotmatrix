@@ -8,10 +8,11 @@ import {
   isLive,
   pickSession,
   pidFile,
+  type Quota,
   readDesire,
+  readLimits,
   readSessions,
   readUsage,
-  readWindow,
   resolveState,
 } from "@claude-status/pet";
 import { bad, figure, good, heading, muted, name, pressure } from "../utils/colors";
@@ -44,6 +45,19 @@ const daemon = async () => {
 
 const row = (label: string, value: string) => `${muted(label.padEnd(12))}${value}`;
 
+// The two edge rows, in words. Unknown rather than zero when nothing has written
+// them, on the same rule the rows go dark under - "none of the week used" is the
+// one wrong answer here that looks like good news.
+const quota = (label: string, reading: Quota | null, when: (at: Date) => string) =>
+  row(
+    label,
+    reading
+      ? `${pressure(`${Math.round(reading.used * 100)}%`, reading.used)} ${muted(
+          `used, resets ${when(new Date(reading.resetsAt))}`,
+        )}`
+      : muted("unknown - no statusline has written one, see status-install"),
+  );
+
 const ago = (at: number, now: number) => {
   const seconds = Math.round((now - at) / 1_000);
   if (seconds < 60) return `${seconds}s ago`;
@@ -63,11 +77,11 @@ run(async () => {
   ]);
 
   const shown = pickSession(snapshots, now);
-  const window = await readWindow(now);
+  const limits = await readLimits(now);
   const transcript = shown?.transcript ?? (await findLatestTranscript());
   const usage = transcript ? await readUsage(transcript) : null;
   const reading = { tokens: usage?.tokens ?? 0, fill: usage?.fill ?? 0 };
-  const { state } = resolveState(desire, snapshots, reading, now);
+  const { state } = resolveState(desire, snapshots, reading, limits, now);
 
   const lines = [
     heading("panel"),
@@ -98,17 +112,12 @@ run(async () => {
         : muted("no transcript found"),
     ),
     row("full", usage ? pressure(`${Math.round(reading.fill * 100)}%`, reading.fill) : muted("-")),
-    // Time through the rolling session window, not usage of it - the figure
-    // `/usage` reports is fetched from the API and cached nowhere on disk. It is
-    // reported here rather than on the panel, which has no row to spare.
-    row(
-      "session",
-      window
-        ? `${figure(`${Math.round(window.fraction * 100)}%`)} ${muted(
-            `through the 5h window, resets ${new Date(window.resetsAt).toLocaleTimeString()}`,
-          )}`
-        : muted("no window open"),
-    ),
+    "",
+    // What the two edge rows are showing. Account-wide, so unlike the context
+    // window above these are the same figures whichever session is speaking.
+    heading("quotas"),
+    quota("5h", limits.fiveHour, (at) => at.toLocaleTimeString()),
+    quota("week", limits.sevenDay, (at) => at.toLocaleString()),
     "",
     heading("sessions"),
   ];

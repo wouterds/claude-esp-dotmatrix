@@ -1,3 +1,4 @@
+import type { Limits } from "./limits";
 import { pickSession, type SessionSnapshot, waitingCount } from "./sessions";
 import { deriveMood, type PetState } from "./state";
 import type { Desire } from "./store";
@@ -18,6 +19,7 @@ export const resolveState = (
   desire: Desire,
   snapshots: readonly SessionSnapshot[],
   usage: Pick<Usage, "tokens" | "fill">,
+  limits: Limits,
   now: number,
 ): Resolved => {
   const session = pickSession(snapshots, now);
@@ -33,6 +35,10 @@ export const resolveState = (
       fill: usage.fill,
       tokens: usage.tokens,
       waiting: waitingCount(snapshots, now),
+      // Account-wide, so unlike the context fill above these do not belong to
+      // the session that was picked - the same two numbers whoever is speaking.
+      fiveHour: limits.fiveHour?.used ?? null,
+      sevenDay: limits.sevenDay?.used ?? null,
     },
   };
 };

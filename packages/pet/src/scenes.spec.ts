@@ -5,9 +5,12 @@ import {
   anticNamed,
   anticWeight,
   drawAlarm,
-  drawGauge,
+  drawBar,
+  drawGauges,
+  FIVE_HOUR_ROW,
   SIGNALS,
   STATUS_SCENE,
+  WEEKLY_ROW,
 } from "./scenes";
 import { deriveMood, type PetState, STATUSES } from "./state";
 
@@ -17,6 +20,8 @@ const stateAt = (fill: number, status: PetState["status"] = "thinking"): PetStat
   fill,
   tokens: Math.round(fill * 200_000),
   waiting: 0,
+  fiveHour: fill,
+  sevenDay: fill,
 });
 
 const litInRow = (frame: ReturnType<typeof createFrame>, y: number) => {
@@ -29,90 +34,149 @@ const litInRow = (frame: ReturnType<typeof createFrame>, y: number) => {
   return lit;
 };
 
-const GAUGE_ROW = HEIGHT - 1;
-
 // An accent moves, so one moment proves nothing about the row it crosses.
 const MOMENTS = [0, 0.17, 0.4, 0.63, 0.9, 1.3, 2.1, 3.4, 5.5, 7.9, 11.3];
 
-describe("drawGauge", () => {
-  it("lights nothing on an empty window", () => {
+describe("drawBar", () => {
+  it("lights nothing on an untouched quota", () => {
     const frame = createFrame();
-    drawGauge(frame, 0);
+    drawBar(frame, FIVE_HOUR_ROW, 0);
 
-    expect(litInRow(frame, GAUGE_ROW)).toEqual([]);
+    expect(litInRow(frame, FIVE_HOUR_ROW)).toEqual([]);
   });
 
-  it("fills the row at the top of the window", () => {
+  it("fills the row at the top of the quota", () => {
     const frame = createFrame();
-    drawGauge(frame, 1);
+    drawBar(frame, FIVE_HOUR_ROW, 1);
 
-    expect(litInRow(frame, GAUGE_ROW).length).toBe(WIDTH);
+    expect(litInRow(frame, FIVE_HOUR_ROW).length).toBe(WIDTH);
   });
 
-  it("lights half the row at half full", () => {
+  it("lights half the row at half spent", () => {
     const frame = createFrame();
-    drawGauge(frame, 0.5);
+    drawBar(frame, FIVE_HOUR_ROW, 0.5);
 
-    expect(litInRow(frame, GAUGE_ROW)).toEqual([0, 1, 2, 3]);
+    expect(litInRow(frame, FIVE_HOUR_ROW)).toEqual([0, 1, 2, 3]);
   });
 
   it("dims the leading pixel by the fraction of it in use", () => {
     const half = createFrame();
     const full = createFrame();
-    drawGauge(half, 0.0625);
-    drawGauge(full, 0.125);
+    drawBar(half, FIVE_HOUR_ROW, 0.0625);
+    drawBar(full, FIVE_HOUR_ROW, 0.125);
 
-    expect(half.get(0, GAUGE_ROW)[1]).toBeLessThan(full.get(0, GAUGE_ROW)[1]);
+    expect(half.get(0, FIVE_HOUR_ROW)[1]).toBeLessThan(full.get(0, FIVE_HOUR_ROW)[1]);
   });
 
   it("stays green through the first half and reddens after three quarters", () => {
     const early = createFrame();
     const late = createFrame();
-    drawGauge(early, 0.4);
-    drawGauge(late, 1);
+    drawBar(early, FIVE_HOUR_ROW, 0.4);
+    drawBar(late, FIVE_HOUR_ROW, 1);
 
-    const [earlyRed, earlyGreen] = early.get(0, GAUGE_ROW);
-    const [lateRed, lateGreen] = late.get(0, GAUGE_ROW);
+    const [earlyRed, earlyGreen] = early.get(0, FIVE_HOUR_ROW);
+    const [lateRed, lateGreen] = late.get(0, FIVE_HOUR_ROW);
 
     expect(earlyGreen).toBeGreaterThan(earlyRed);
     expect(lateRed).toBeGreaterThan(lateGreen);
   });
 
-  it("touches only the bottom row", () => {
+  it("touches only the row it was given", () => {
     const frame = createFrame();
-    drawGauge(frame, 1);
+    drawBar(frame, WEEKLY_ROW, 1);
 
-    for (let y = 0; y < GAUGE_ROW; y++) {
+    for (let y = WEEKLY_ROW + 1; y < HEIGHT; y++) {
       expect(litInRow(frame, y), `row ${y}`).toEqual([]);
+    }
+  });
+
+  // Position is the only thing telling the two rows apart, so the same figure
+  // has to look identical on either - a difference here would read as a
+  // different number rather than as a different window.
+  it("draws the same pixels on either row for the same figure", () => {
+    const top = createFrame();
+    const bottom = createFrame();
+    drawBar(top, WEEKLY_ROW, 0.62);
+    drawBar(bottom, FIVE_HOUR_ROW, 0.62);
+
+    for (let x = 0; x < WIDTH; x++) {
+      expect(top.get(x, WEEKLY_ROW), `column ${x}`).toEqual(bottom.get(x, FIVE_HOUR_ROW));
     }
   });
 });
 
+describe("drawGauges", () => {
+  it("puts the week on top and the five hour window on the bottom", () => {
+    const frame = createFrame();
+    drawGauges(frame, { ...stateAt(0), fiveHour: 0.25, sevenDay: 0.75 });
+
+    expect(litInRow(frame, FIVE_HOUR_ROW)).toEqual([0, 1]);
+    expect(litInRow(frame, WEEKLY_ROW)).toEqual([0, 1, 2, 3, 4, 5]);
+  });
+
+  // A row defaulting to empty would read as "none of it used", which is the one
+  // wrong answer that looks like good news.
+  it("leaves a quota nothing has reported dark rather than empty", () => {
+    const frame = createFrame();
+    drawGauges(frame, { ...stateAt(0.5), fiveHour: null, sevenDay: null });
+
+    expect(litInRow(frame, FIVE_HOUR_ROW)).toEqual([]);
+    expect(litInRow(frame, WEEKLY_ROW)).toEqual([]);
+  });
+
+  it("draws the one it knows when the other is missing", () => {
+    const frame = createFrame();
+    drawGauges(frame, { ...stateAt(0), fiveHour: 0.5, sevenDay: null });
+
+    expect(litInRow(frame, FIVE_HOUR_ROW)).toEqual([0, 1, 2, 3]);
+    expect(litInRow(frame, WEEKLY_ROW)).toEqual([]);
+  });
+
+  // The face reddens and slows on the context window, which is per session; the
+  // two bars are account-wide. Crossing them would put one chat's fill on a row
+  // that is meant to be the same number in every chat.
+  it("takes no notice of the context fill the face runs on", () => {
+    const frame = createFrame();
+    drawGauges(frame, { ...stateAt(1), fiveHour: 0.125, sevenDay: 0.125 });
+
+    expect(litInRow(frame, FIVE_HOUR_ROW)).toEqual([0]);
+    expect(litInRow(frame, WEEKLY_ROW)).toEqual([0]);
+  });
+});
+
 describe("STATUS_SCENE", () => {
-  it("never lets an accent shorten the gauge, in any status at any moment", () => {
-    // The spinner crosses the whole edge, the gauge row included, on purpose - so
-    // the guarantee is not that the row is left alone but that it only ever gets
-    // brighter. A bar something could eat into would read as a smaller number.
-    for (const status of STATUSES) {
-      for (const t of MOMENTS) {
-        const alone = createFrame();
-        drawGauge(alone, 0.5);
+  it("never lets an accent shorten either bar, in any status at any moment", () => {
+    // The spinner crosses the whole edge, both number rows included, on purpose -
+    // so the guarantee is not that they are left alone but that they only ever
+    // get brighter. A bar something could eat into would read as a smaller
+    // number, and these two rows are the only things here that have to be true.
+    for (const row of [WEEKLY_ROW, FIVE_HOUR_ROW]) {
+      for (const status of STATUSES) {
+        for (const t of MOMENTS) {
+          const alone = createFrame();
+          drawBar(alone, row, 0.5);
 
-        const together = createFrame();
-        STATUS_SCENE.paint(together, t, stateAt(0.5, status));
+          const together = createFrame();
+          STATUS_SCENE.paint(together, t, stateAt(0.5, status));
 
-        expect(litInRow(together, GAUGE_ROW).length, `${status} at ${t}`).toBeGreaterThanOrEqual(
-          litInRow(alone, GAUGE_ROW).length,
-        );
+          expect(
+            litInRow(together, row).length,
+            `row ${row}, ${status} at ${t}`,
+          ).toBeGreaterThanOrEqual(litInRow(alone, row).length);
+        }
       }
     }
   });
 
-  it("shows the fill on the gauge row alongside the face", () => {
+  // On a status with no accent of its own, so this is the bars alone. The
+  // statuses that do have one cross the edge deliberately, and what holds for
+  // those is the "never shorten" guarantee above rather than an exact length.
+  it("shows both quotas alongside the face", () => {
     const frame = createFrame();
-    STATUS_SCENE.paint(frame, 0.5, stateAt(0.75));
+    STATUS_SCENE.paint(frame, 0.5, { ...stateAt(0.2, "done"), fiveHour: 0.75, sevenDay: 0.5 });
 
-    expect(litInRow(frame, GAUGE_ROW)).toEqual([0, 1, 2, 3, 4, 5]);
+    expect(litInRow(frame, FIVE_HOUR_ROW)).toEqual([0, 1, 2, 3, 4, 5]);
+    expect(litInRow(frame, WEEKLY_ROW)).toEqual([0, 1, 2, 3]);
   });
 
   it("lights something in every status - a dark panel reads as unplugged", () => {

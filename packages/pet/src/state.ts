@@ -23,6 +23,16 @@ export type PetState = {
   tokens: number;
   /** How many sessions are blocked on the user. */
   waiting: number;
+  /**
+   * How much of the rolling 5h quota is spent, 0 to 1, and null when unknown.
+   *
+   * Account-wide rather than per session, unlike `fill` - so it is the same
+   * number whichever chat the panel is speaking for, and a row can show it
+   * without asking which session it belongs to.
+   */
+  fiveHour: number | null;
+  /** How much of the 7 day quota is spent, 0 to 1. Null when unknown. */
+  sevenDay: number | null;
 };
 
 export const isStatus = (value: string): value is Status => STATUSES.includes(value as Status);

@@ -65,15 +65,17 @@ const noise = (x: number, y: number, step: number) => {
   return ((h ^ (h >>> 16)) >>> 0) / 0xffffffff;
 };
 
-// Row 7 is the context gauge. Row 0 carries nothing of its own, which leaves it
-// to the spinner.
-const GAUGE_ROW = HEIGHT - 1;
+// Both edge rows are numbers, and the face has the six between them. The 5h
+// window is on the bottom because it is the one that bites first and so is the
+// one glanced at; the week sits on top, where the corner dot already lives.
+export const FIVE_HOUR_ROW = HEIGHT - 1;
+export const WEEKLY_ROW = 0;
 const FACE_TOP = 1;
 const FACE_ROWS = HEIGHT - 2;
 
-// The whole perimeter, the gauge row included. The orbit is drawn after the gauge
-// so it passes visibly over rather than behind - and only ever adds, so the bar
-// can be brightened by it but never eaten into.
+// The whole perimeter, both number rows included. The orbit is drawn after them
+// so it passes visibly over rather than behind - and only ever adds, so a bar can
+// be brightened by it but never eaten into.
 const BORDER: readonly [number, number][] = (() => {
   const path: [number, number][] = [];
   for (let x = 0; x < WIDTH; x++) path.push([x, 0]);
@@ -84,20 +86,35 @@ const BORDER: readonly [number, number][] = (() => {
   return path;
 })();
 
-export const drawGauge = (frame: Frame, fill: number) => {
-  const clamped = Math.max(0, Math.min(1, fill));
+export const drawBar = (frame: Frame, row: number, used: number) => {
+  const clamped = Math.max(0, Math.min(1, used));
   const lit = clamped * WIDTH;
   const band = GAUGE_BANDS.find((candidate) => clamped <= candidate.upTo) ?? GAUGE_BANDS[3];
   const color = band.color;
 
   for (let x = 0; x < WIDTH; x++) {
-    // The last pixel is dimmed by however much of it is filled, so the gauge
-    // has eight times the resolution its eight pixels suggest.
+    // The last pixel is dimmed by however much of it is filled, so a bar has
+    // eight times the resolution its eight pixels suggest.
     const amount = Math.min(1, lit - x);
     if (amount <= 0) return;
 
-    frame.set(x, GAUGE_ROW, scale(color, 0.3 + 0.7 * amount));
+    frame.set(x, row, scale(color, 0.3 + 0.7 * amount));
   }
+};
+
+/**
+ * Both quota rows, in the same four bands at the same brightness - position is
+ * what tells them apart. A second vocabulary for the top row would be one more
+ * thing to learn than a panel this size can carry.
+ *
+ * A quota nothing has reported stays dark. A row defaulting to empty would read
+ * as "none of the week used", which is the one wrong answer that looks like good
+ * news - and the rule everywhere else here is that a gauge may understate but
+ * must never overstate.
+ */
+export const drawGauges = (frame: Frame, state: PetState) => {
+  if (state.sevenDay !== null) drawBar(frame, WEEKLY_ROW, state.sevenDay);
+  if (state.fiveHour !== null) drawBar(frame, FIVE_HOUR_ROW, state.fiveHour);
 };
 
 /**
@@ -246,9 +263,9 @@ export const STATUS_SCENE: Scene = {
       gaze: gazeAt(weary),
     });
 
-    // Gauge first, accents over it: the orbit is meant to be seen crossing the
+    // Gauges first, accents over them: the orbit is meant to be seen crossing the
     // edge, and drawing it underneath would make it vanish behind a full bar.
-    drawGauge(frame, state.fill);
+    drawGauges(frame, state);
 
     ACCENTS[state.status]?.(frame, t, color);
   },
@@ -386,7 +403,7 @@ const PLAYFUL: readonly Scene[] = [
       // Shut for the middle of it rather than throughout, so it reads as a wink
       // and not as a face with one eye.
       drawFace(frame, state.mood, STATUS_COLORS[state.status], { wink: t > 0.35 && t < 0.95 });
-      drawGauge(frame, state.fill);
+      drawGauges(frame, state);
     },
   },
 
@@ -399,7 +416,7 @@ const PLAYFUL: readonly Scene[] = [
       drawFace(frame, state.mood, STATUS_COLORS[state.status], {
         gaze: [Math.round(Math.sin(t * 18)), 0],
       });
-      drawGauge(frame, state.fill);
+      drawGauges(frame, state);
     },
   },
 ];
@@ -416,7 +433,7 @@ export const ANTICS: readonly Scene[] = [
         gaze: [beat > 0 ? 1 : -1, 0],
         bob: beat > 0.5 ? -1 : 0,
       });
-      drawGauge(frame, state.fill);
+      drawGauges(frame, state);
     },
   },
 

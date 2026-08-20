@@ -1,4 +1,5 @@
 export { createDirector } from "./director";
+export { type Limits, NO_LIMITS, type Quota, readLimits } from "./limits";
 export { resolveState } from "./resolve";
 export { ANTIC_NAMES, anticNamed } from "./scenes";
 export { isLive, pickSession, pruneSessions, readSessions, type SessionSnapshot } from "./sessions";
