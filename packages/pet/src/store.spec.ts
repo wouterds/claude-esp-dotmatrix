@@ -19,11 +19,11 @@ describe("readDesire", () => {
     expect(await readDesire(file)).toEqual(DEFAULT_DESIRE);
   });
 
-  it("drops a status it does not know instead of rendering nothing", async () => {
+  it("drops a status it does not know, falling back to following the sessions", async () => {
     const file = await scratch();
     await writeFile(file, JSON.stringify({ status: "vibing" }));
 
-    expect((await readDesire(file)).status).toBe("idle");
+    expect((await readDesire(file)).status).toBeNull();
   });
 
   it("clamps brightness to the ceiling, however the file was edited", async () => {
@@ -92,5 +92,6 @@ describe("writeDesire", () => {
     // Whichever won, the file parses and is one of them - never a partial write.
     expect(DEFAULT_DESIRE.brightness).toBe(DEFAULT_BRIGHTNESS);
     expect((await readDesire(file)).status).toMatch(/idle|thinking|working|done/);
+    expect(DEFAULT_DESIRE.status).toBeNull();
   });
 });

@@ -2,7 +2,19 @@ export { createDirector, type Director, type DirectorOptions } from "./director"
 export { drawFace, type FaceOptions } from "./faces";
 export { drawGlyph, type Glyph } from "./glyphs";
 export { STATUS_COLORS } from "./palette";
+export { type Resolved, resolveState } from "./resolve";
 export { ANTIC_NAMES, ANTICS, anticNamed, drawGauge, type Scene, STATUS_SCENE } from "./scenes";
+export {
+  attentionElsewhere,
+  forgetSession,
+  isLive,
+  pickSession,
+  pruneSessions,
+  readSessions,
+  type SessionSnapshot,
+  sessionsDir,
+  writeSession,
+} from "./sessions";
 export {
   DEFAULT_STATE,
   deriveMood,

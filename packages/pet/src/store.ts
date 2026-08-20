@@ -24,7 +24,12 @@ export const pidFile = () => join(home(), "daemon.pid");
 export type Cell = [x: number, y: number, color: string];
 
 export type Desire = {
-  status: Status;
+  /**
+   * An override. Null - the default - follows whichever session was heard from
+   * last, which is what makes the pet work across every project at once rather
+   * than only the one it was started from.
+   */
+  status: Status | null;
   /** Null derives it from the status and how full the window is. */
   mood: Mood | null;
   brightness: number;
@@ -36,7 +41,7 @@ export type Desire = {
 };
 
 export const DEFAULT_DESIRE: Desire = {
-  status: "idle",
+  status: null,
   mood: null,
   brightness: DEFAULT_BRIGHTNESS,
   rotation: 0,
@@ -58,7 +63,7 @@ const sanitise = (raw: unknown): Desire => {
   if (typeof raw !== "object" || raw === null) return DEFAULT_DESIRE;
 
   const input = raw as Record<string, unknown>;
-  const status = typeof input.status === "string" && isStatus(input.status) ? input.status : "idle";
+  const status = typeof input.status === "string" && isStatus(input.status) ? input.status : null;
   const mood = typeof input.mood === "string" && isMood(input.mood) ? input.mood : null;
 
   const brightness =
