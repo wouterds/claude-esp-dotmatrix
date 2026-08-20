@@ -62,6 +62,12 @@ const MOUTH: Glyph = ["...##..."];
 
 const MOUTHLESS: readonly Mood[] = ["dead"];
 
+// The right eye replaced by a lid, the left left alone. Built from whatever the
+// mood's eyes are rather than being its own sprite, so a wink works on every face
+// and stays in step if the shapes change.
+const winking = (eyes: Glyph): Glyph =>
+  eyes.map((row, i) => row.slice(0, 4) + (i === eyes.length - 1 ? ".###" : "...."));
+
 export type FaceOptions = {
   /** Overrides the mood's eyes with a lid, for a blink. */
   blink?: boolean;
@@ -73,19 +79,23 @@ export type FaceOptions = {
   gaze?: readonly [number, number];
   /** Shifts the whole face, for a bob. */
   bob?: number;
+  /** Shuts one eye. */
+  wink?: boolean;
 };
 
 export const drawFace = (
   frame: Frame,
   mood: Mood,
   color: Color,
-  { blink = false, gaze = [0, 0], bob = 0 }: FaceOptions = {},
+  { blink = false, gaze = [0, 0], bob = 0, wink = false }: FaceOptions = {},
 ) => {
   const dead = mood === "dead" && !blink;
   const row = dead ? DEAD_ROW : FACE_ROW;
   const [dx, dy] = dead ? [0, 0] : gaze;
 
-  drawGlyph(frame, blink ? LID : EYES[mood], color, dx, row + bob + dy);
+  const eyes = blink ? LID : EYES[mood];
+
+  drawGlyph(frame, wink ? winking(eyes) : eyes, color, dx, row + bob + dy);
 
   // Drawn after the eyes and never moved, so however far they look the mouth is
   // untouched. They do cross into its two columns, but rows apart from it.

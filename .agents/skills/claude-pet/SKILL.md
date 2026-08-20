@@ -107,7 +107,7 @@ That is the command for "which of my four sessions needs me".
 ```bash
 npx status-set thinking            # pins the panel - hooks do this, you rarely need to
 npx status-set --auto              # release the pin, follow the sessions again
-npx status-play heart              # --list for all eleven
+npx status-play heart              # --list for all of them
 npx status-pixel 0,0,#ff0000       # individual pixels, pet off duty
 npx status-pixel --clear           # hand the panel back
 npx status-brightness 12           # 0 to 96

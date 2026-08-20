@@ -250,13 +250,38 @@ describe("anticWeight", () => {
     }
   });
 
-  it("makes the cross the commonest thing once there is no room left", () => {
-    expect(shareOf("cross", 0)).toBeLessThan(0.1);
-    expect(shareOf("cross", 1)).toBeGreaterThan(0.5);
+  const commonest = (fatigue: number) =>
+    [...ANTICS].sort((a, b) => anticWeight(b, fatigue) - anticWeight(a, fatigue))[0].name;
+
+  // Asserted against each other rather than as percentages. A share depends on
+  // how many antics exist, so adding one used to break these; which one is
+  // likeliest is the actual intent.
+  it("makes the cross the likeliest single antic once there is no room left", () => {
+    expect(commonest(1)).toBe("cross");
   });
 
-  it("keeps hearts frequent while there is room and rarer once there is not", () => {
-    expect(shareOf("heart", 0)).toBeGreaterThan(0.25);
+  it("makes hearts the likeliest while there is room", () => {
+    expect(commonest(0)).toBe("heart");
+  });
+
+  it("hands the pool over to the grim ones as the window empties", () => {
+    const grim = ["cross", "skull", "zzz"];
+    const shareOfGrim = (fatigue: number) => {
+      const total = ANTICS.reduce((sum, antic) => sum + anticWeight(antic, fatigue), 0);
+
+      return (
+        ANTICS.filter((antic) => grim.includes(antic.name)).reduce(
+          (sum, antic) => sum + anticWeight(antic, fatigue),
+          0,
+        ) / total
+      );
+    };
+
+    expect(shareOfGrim(0)).toBeLessThan(0.1);
+    expect(shareOfGrim(1)).toBeGreaterThan(0.5);
+  });
+
+  it("keeps hearts commoner with room than without", () => {
     expect(shareOf("heart", 1)).toBeLessThan(shareOf("heart", 0));
   });
 

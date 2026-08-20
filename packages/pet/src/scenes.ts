@@ -1,6 +1,20 @@
 import { type Color, type Frame, HEIGHT, hsv, lerp, scale, WIDTH } from "@claude-status/matrix";
 import { drawFace } from "./faces";
-import { BOLT, BURST, CHECK, CROSS, drawGlyph, HEART, SPARKLE } from "./glyphs";
+import {
+  BOLT,
+  BURST,
+  CHECK,
+  CROSS,
+  drawGlyph,
+  EXCLAIM,
+  GHOST,
+  HEART,
+  INVADER,
+  QUESTION,
+  SKULL,
+  SPARKLE,
+  ZED,
+} from "./glyphs";
 import { EXHAUSTED, GAUGE_BANDS, PINK, STATUS_COLORS, WHITE } from "./palette";
 import type { PetState, Status } from "./state";
 
@@ -228,6 +242,148 @@ const glyphScene = (name: string, glyph: typeof HEART, color: Color, duration: n
   },
 });
 
+// Everything here is a pure function of its elapsed time and its seed, same as the
+// rest - no scene keeps anything between frames, which is what lets a spec assert
+// what got drawn.
+const PLAYFUL: readonly Scene[] = [
+  {
+    name: "pacman",
+    duration: 2.4,
+    spentWeight: 0,
+    paint: (frame, t) => {
+      const cx = sawtooth(t, 2.4) * (WIDTH + 8) - 4;
+      // Chomping at nine hertz - fast enough to read as eating rather than as a
+      // shape wobbling.
+      const gape = Math.abs(Math.sin(t * 9)) * 0.95;
+
+      // The dots he has not got to yet.
+      for (let x = 0; x < WIDTH; x++) {
+        if (x % 2 === 0 && x > cx + 2) frame.add(x, 3, scale(WHITE, 0.25));
+      }
+
+      for (let y = 0; y < HEIGHT; y++) {
+        for (let x = 0; x < WIDTH; x++) {
+          if (Math.hypot(x - cx, y - 3.5) > 3.3) continue;
+          // The wedge, opening towards where he is going.
+          if (Math.abs(Math.atan2(y - 3.5, x - cx)) < gape) continue;
+
+          frame.add(x, y, scale(STATUS_COLORS.waiting, 0.95));
+        }
+      }
+    },
+  },
+
+  {
+    name: "firework",
+    duration: 1.8,
+    spentWeight: 0,
+    paint: (frame, t, _state, seed = 0) => {
+      const progress = sawtooth(t, 1.8);
+
+      // Two shells, the second a beat behind, both fading as they go out.
+      for (const shell of [0, 0.35]) {
+        const phase = progress - shell;
+        if (phase <= 0) continue;
+
+        for (let y = 0; y < HEIGHT; y++) {
+          for (let x = 0; x < WIDTH; x++) {
+            const spread = Math.abs(x - 3.5) + Math.abs(y - 3.5);
+            if (Math.abs(spread - phase * 7) > 0.9) continue;
+
+            frame.add(x, y, scale(hsv(seed + shell, 0.85, 1), (1 - phase) * 0.95));
+          }
+        }
+      }
+    },
+  },
+
+  {
+    name: "rain",
+    duration: 2.6,
+    spentWeight: 0,
+    paint: (frame, t, _state, seed = 0) => {
+      for (let x = 0; x < WIDTH; x++) {
+        // A different speed and offset per column, so it never falls in step.
+        const head = (t * (5 + (x % 4) * 2.5) + x * 2.7) % (HEIGHT + 4);
+
+        for (let tail = 0; tail < 4; tail++) {
+          frame.add(x, Math.floor(head) - tail, scale(hsv(seed + 0.33, 0.9, 1), 0.9 - tail * 0.22));
+        }
+      }
+    },
+  },
+
+  {
+    name: "ripple",
+    duration: 2.2,
+    spentWeight: 0.5,
+    paint: (frame, t, _state, seed = 0) => {
+      // Diamonds rather than circles: a circle on eight pixels is a lumpy square,
+      // where a diamond is exactly itself.
+      for (const ring of [0, 3, 6]) {
+        const radius = (t * 4.5 + ring) % 9;
+
+        for (let y = 0; y < HEIGHT; y++) {
+          for (let x = 0; x < WIDTH; x++) {
+            const spread = Math.abs(x - 3.5) + Math.abs(y - 3.5);
+            if (Math.abs(spread - radius) > 0.7) continue;
+
+            frame.add(x, y, scale(hsv(seed + radius / 14, 0.7, 1), 0.85));
+          }
+        }
+      }
+    },
+  },
+
+  {
+    name: "spiral",
+    duration: 2,
+    spentWeight: 0,
+    paint: (frame, t, _state, seed = 0) => {
+      // Sampled well past the pixel count. At sixteen the rounding left gaps and
+      // it read as scattered dots rather than as one curve.
+      const arm = 40;
+
+      for (let i = 0; i < arm; i++) {
+        const along = i / arm;
+        const angle = t * 6 + along * TAU * 1.6;
+        const radius = along * 3.6;
+
+        frame.add(
+          Math.round(3.5 + radius * Math.cos(angle)),
+          Math.round(3.5 + radius * Math.sin(angle)),
+          scale(hsv(seed + along * 0.3, 0.8, 1), 0.95 - along * 0.5),
+        );
+      }
+    },
+  },
+
+  {
+    name: "wink",
+    duration: 1.4,
+    spentWeight: 0.5,
+    paint: (frame, t, state) => {
+      // Shut for the middle of it rather than throughout, so it reads as a wink
+      // and not as a face with one eye.
+      drawFace(frame, state.mood, STATUS_COLORS[state.status], { wink: t > 0.35 && t < 0.95 });
+      drawGauge(frame, state.fill);
+    },
+  },
+
+  {
+    name: "dart",
+    duration: 1.3,
+    spentWeight: 0.5,
+    paint: (frame, t, state) => {
+      // Eyes flicking far faster than the idle gaze - reads as a double take.
+      drawFace(frame, state.mood, STATUS_COLORS[state.status], {
+        gaze: [Math.round(Math.sin(t * 18)), 0],
+      });
+      drawGauge(frame, state.fill);
+    },
+  },
+];
+
 export const ANTICS: readonly Scene[] = [
   {
     name: "dance",
@@ -305,8 +461,17 @@ export const ANTICS: readonly Scene[] = [
   { ...glyphScene("bolt", BOLT, STATUS_COLORS.waiting, 1.4), spentWeight: 0 },
   { ...glyphScene("sparkle", SPARKLE, STATUS_COLORS.thinking, 1.6), spentWeight: 0.5 },
   { ...glyphScene("check", CHECK, STATUS_COLORS.done, 1.6), spentWeight: 0.5 },
+  { ...glyphScene("invader", INVADER, STATUS_COLORS.done, 1.8), spentWeight: 0 },
+  { ...glyphScene("ghost", GHOST, WHITE, 1.8), spentWeight: 0.5 },
+  { ...glyphScene("exclaim", EXCLAIM, STATUS_COLORS.waiting, 1.2), spentWeight: 1 },
+  { ...glyphScene("question", QUESTION, STATUS_COLORS.thinking, 1.6), spentWeight: 1 },
+  // These two belong to a session running out of room, so they get commoner as it
+  // does rather than draining away with the playful ones.
+  { ...glyphScene("skull", SKULL, STATUS_COLORS.error, 1.8), weight: 0.3, spentWeight: 3 },
+  { ...glyphScene("zzz", ZED, STATUS_COLORS.idle, 2), weight: 0.3, spentWeight: 3 },
   // Rare while there is room and the commonest thing once there is not.
   { ...glyphScene("cross", CROSS, STATUS_COLORS.error, 1.4), weight: 0.5, spentWeight: 6 },
+  ...PLAYFUL,
 ];
 
 // Scenes that mean something, and so are never picked at random. A directional
