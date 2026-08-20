@@ -1,10 +1,14 @@
 import { BLACK, type Color, gammaCorrect } from "./color";
 import { FRAME_BYTES, HEIGHT, WIDTH } from "./protocol";
 
-// The module chains its 64 LEDs left to right, top to bottom, from the corner
-// nearest the USB socket. Which way up that ends on a desk is the owner's
-// business, so every scene draws in one orientation and the buffer is turned on
-// its way to the wire.
+// The module chains its 64 LEDs down the first column, then down the second -
+// top to bottom, left to right. Assuming the other way round transposes the
+// panel, which is a reflection and so is not fixable by any rotation: an
+// orientation marker comes back with its two arms swapped rather than turned.
+const chainIndex = (column: number, row: number) => column * HEIGHT + row;
+
+// Which way up the panel ends on a desk is the owner's business, so every scene
+// draws in one orientation and the buffer is turned on its way to the wire.
 export type Rotation = 0 | 90 | 180 | 270;
 
 export const ROTATIONS: readonly Rotation[] = [0, 90, 180, 270];
@@ -13,11 +17,11 @@ export const isRotation = (value: number): value is Rotation =>
   ROTATIONS.includes(value as Rotation);
 
 const ledIndex = (x: number, y: number, rotation: Rotation) => {
-  if (rotation === 90) return x * WIDTH + (HEIGHT - 1 - y);
-  if (rotation === 180) return (HEIGHT - 1 - y) * WIDTH + (WIDTH - 1 - x);
-  if (rotation === 270) return (HEIGHT - 1 - x) * WIDTH + y;
+  if (rotation === 90) return chainIndex(WIDTH - 1 - y, x);
+  if (rotation === 180) return chainIndex(WIDTH - 1 - x, HEIGHT - 1 - y);
+  if (rotation === 270) return chainIndex(y, HEIGHT - 1 - x);
 
-  return y * WIDTH + x;
+  return chainIndex(x, y);
 };
 
 export type Frame = {

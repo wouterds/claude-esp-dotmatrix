@@ -30,9 +30,16 @@ Replies are text lines so a human can read them in a serial monitor. On boot:
 
 ## Frame order and orientation
 
-The module chains its 64 LEDs left to right, top to bottom. Scenes draw in one
-orientation and `Frame.toBytes(rotation)` turns the buffer on its way out, so
-which way up the panel sits on a desk is a setting rather than a rewrite.
+The module chains its 64 LEDs **down the first column, then down the second** -
+top to bottom, left to right. Assume the other way round and the panel is
+transposed, which is a reflection: no rotation fixes it, and an orientation
+marker comes back with its arms **swapped** rather than turned. That is the tell,
+and it is worth knowing because "the display is mirrored somehow" is otherwise
+indistinguishable from a wiring fault.
+
+Scenes draw in one orientation and `Frame.toBytes(rotation)` turns the buffer on
+its way out, so which way up the panel sits on a desk is a setting rather than a
+rewrite.
 
 **Gamma is applied at this boundary**, not by scenes. A WS2812 is close to linear
 in its byte and an eye is not, so a fade to a quarter reads as half lit;
