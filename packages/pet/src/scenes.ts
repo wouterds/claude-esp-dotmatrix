@@ -521,6 +521,7 @@ export const ANTICS: readonly Scene[] = [
   {
     name: "ghost",
     duration: 1.8,
+    weight: 3,
     spentWeight: 0.5,
     // Turning to face the other way partway through its run, so it drifts rather
     // than sits there. The glow is the same pulse every other glyph gets.
@@ -537,7 +538,7 @@ export const ANTICS: readonly Scene[] = [
   { ...glyphScene("skull", SKULL, STATUS_COLORS.error, 1.8), weight: 0.3, spentWeight: 3 },
   { ...glyphScene("zzz", ZED, STATUS_COLORS.idle, 2), weight: 0.3, spentWeight: 3 },
   // Rare while there is room and the commonest thing once there is not.
-  { ...glyphScene("cross", CROSS, STATUS_COLORS.error, 1.4), weight: 0.5, spentWeight: 6 },
+  { ...glyphScene("cross", CROSS, STATUS_COLORS.error, 1.4), weight: 1.5, spentWeight: 6 },
   ...PLAYFUL,
 ];
 
