@@ -512,7 +512,7 @@ describe("anticWeight", () => {
 
   it("hands the pool over to the grim ones as the window empties", () => {
     // given
-    const grim = ["cross", "skull", "zzz"];
+    const grim = ["cross", "skull"];
     const shareOfGrim = (fatigue: number) => {
       const total = ANTICS.reduce((sum, antic) => sum + anticWeight(antic, fatigue), 0);
 

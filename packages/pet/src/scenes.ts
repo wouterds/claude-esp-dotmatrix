@@ -14,7 +14,6 @@ import {
   QUESTION,
   SKULL,
   SPARKLE,
-  ZED,
 } from "./glyphs";
 import { EXHAUSTED, GAUGE_BANDS, PINK, STATUS_COLORS, WHITE } from "./palette";
 import type { PetState, Status } from "./state";
@@ -219,17 +218,10 @@ const ACCENTS: Partial<Record<Status, (frame: Frame, t: number, color: Color) =>
     }
   },
 
-  running: (frame, t, color) => {
-    // The whole perimeter at once, so it has to breathe rather than flash. At
-    // its old peak of 0.8 every 0.7s it read as a border strobing around the
-    // frame, and it out-shouted the corner dot - which is meant to be the one
-    // thing here that wants acting on.
-    const strength = 0.25 + 0.35 * pulse(t, 1.5);
-
-    for (const [x, y] of BORDER) {
-      frame.add(x, y, scale(color, strength));
-    }
-  },
+  // `running` has no accent. Lighting the whole perimeter at once was the
+  // loudest thing on an already busy panel, and it fired on every command - so
+  // the one status that happens constantly was the one shouting. The status
+  // colour and the laser say enough between them.
 };
 
 // How lit the face itself is. Everything breathes a little, an error blinks, and
@@ -536,7 +528,6 @@ export const ANTICS: readonly Scene[] = [
   // These two belong to a session running out of room, so they get commoner as it
   // does rather than draining away with the playful ones.
   { ...glyphScene("skull", SKULL, STATUS_COLORS.error, 1.8), weight: 0.3, spentWeight: 3 },
-  { ...glyphScene("zzz", ZED, STATUS_COLORS.idle, 2), weight: 0.3, spentWeight: 3 },
   // Rare while there is room and the commonest thing once there is not.
   { ...glyphScene("cross", CROSS, STATUS_COLORS.error, 1.4), weight: 1.5, spentWeight: 6 },
   ...PLAYFUL,
