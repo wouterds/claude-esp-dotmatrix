@@ -3,6 +3,7 @@
     "allow": [
       "Bash(npx status-board:*)",
       "Bash(npx status-brightness:*)",
+      "Bash(npx status-install:*)",
       "Bash(npx status-orient:*)",
       "Bash(npx status-pixel:*)",
       "Bash(npx status-play:*)",

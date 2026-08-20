@@ -6,6 +6,7 @@
   "bin": {
     "status-board": "./src/bin/board.ts",
     "status-brightness": "./src/bin/brightness.ts",
+    "status-install": "./src/bin/install.ts",
     "status-orient": "./src/bin/orient.ts",
     "status-pixel": "./src/bin/pixel.ts",
     "status-play": "./src/bin/play.ts",
