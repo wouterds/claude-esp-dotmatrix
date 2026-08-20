@@ -45,8 +45,11 @@ A session whose hooks were wired mid-flight has no prompt recorded. Those compet
 only when nothing has been spoken to at all, so one can never take the panel off
 a session the user actually typed into.
 
-A hand-over plays a **full-screen arrow** in a colour picked per playing, so a
-switch is something seen rather than something noticed after the fact.
+A hand-over plays **three full-height arrowheads** sweeping the panel, in a colour
+picked per playing and turning direction each time. Stacked heads read as a
+direction where one arrow with a tail read as an object being dragged, and
+alternating says "it moved" where one fixed direction eventually reads as
+decoration.
 
 ## Why a session expires
 
@@ -96,7 +99,7 @@ that wants you.
 ## The gauge
 
 Row 7, and it is the only row with a number on it. Green to 40%, yellow to 60%,
-orange to 80%, red beyond - four bands rather than a gradient, because "it is
+orange to 80%, a warm dark red beyond - four bands rather than a gradient, because "it is
 orange" is a faster read than "it is somewhere between amber and orange". The
 leading pixel dims by the fraction of it in use, so the row has eight times the
 resolution its eight pixels suggest.

@@ -124,6 +124,41 @@ describe("createDirector", () => {
     expect(pet.playing()).toBe("status");
   });
 
+  it("turns a mirroring scene round each time it plays", () => {
+    const pet = director(600);
+
+    const sweep = (at: number) => {
+      pet.play("switch", at);
+
+      const frame = createFrame();
+      pet.paint(frame, at + 0.5, state());
+
+      return frame.toBytes().join(",");
+    };
+
+    const first = sweep(0);
+    const second = sweep(10);
+    const third = sweep(20);
+
+    expect(second).not.toBe(first);
+    expect(third).toBe(first);
+  });
+
+  it("does not turn round scenes that have no direction", () => {
+    const pet = director(600);
+
+    const play = (at: number) => {
+      pet.play("heart", at);
+
+      const frame = createFrame();
+      pet.paint(frame, at + 0.5, state());
+
+      return frame.toBytes().join(",");
+    };
+
+    expect(play(10)).toBe(play(0));
+  });
+
   it("plays one on demand and reports an unknown name rather than guessing", () => {
     const pet = director(600);
 

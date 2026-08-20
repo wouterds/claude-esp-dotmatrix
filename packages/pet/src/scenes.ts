@@ -34,11 +34,22 @@ export type Scene = {
   /** Seconds. Null runs until something replaces it. */
   duration: number | null;
   /**
-   * `seed` is 0 to 1, fixed for one playing of the scene. It is an argument
-   * rather than a call to Math.random inside, so a scene stays a pure function
-   * of its inputs and a spec can still assert what it drew.
+   * Declares that the scene has a direction and wants it turned round each time
+   * it plays. The director keeps the alternation, so a scene stays stateless.
    */
-  paint: (frame: Frame, elapsed: number, state: PetState, seed?: number) => void;
+  mirrors?: boolean;
+  /**
+   * `seed` is 0 to 1 and `mirrored` flips the direction; both are fixed for one
+   * playing. They are arguments rather than calls to Math.random inside, so a
+   * scene stays a pure function of its inputs and a spec can assert what it drew.
+   */
+  paint: (
+    frame: Frame,
+    elapsed: number,
+    state: PetState,
+    seed?: number,
+    mirrored?: boolean,
+  ) => void;
 };
 
 const pulse = (t: number, period: number) => 0.5 + 0.5 * Math.sin((t / period) * TAU);
@@ -488,37 +499,48 @@ export const ANTICS: readonly Scene[] = [
 // happened, which is worse than not having it.
 const SWITCH_DURATION = 1.3;
 
+// Three arrowheads rather than one arrow with a tail. Stacked they read as a
+// direction - a queue of things heading somewhere - where the tail read as one
+// object being dragged.
+const SWITCH_HEADS = 3;
+const SWITCH_SPACING = 3.2;
+const SWITCH_DEPTH = 2;
+
 export const SIGNALS: readonly Scene[] = [
   {
     name: "switch",
     duration: SWITCH_DURATION,
-    // One arrow the size of the panel, flying across and dragging a tail behind
-    // it. A hand-over is the one event here that is about two things rather than
-    // one, so it gets the whole display rather than a corner of it.
-    paint: (frame, t, _state, seed = 0) => {
+    // Left to right, then right to left, then back. Alternating says "it moved"
+    // where one fixed direction eventually reads as decoration.
+    mirrors: true,
+    // A hand-over is the one event here about two things rather than one, so it
+    // gets the whole panel rather than a corner of it.
+    paint: (frame, t, _state, seed = 0, mirrored = false) => {
       // A different colour each time, so two switches in a row read as two
       // events. Status colour would be the obvious choice and is the wrong one:
-      // it makes the sweep look like a status the panel is about to settle on.
+      // it makes the sweep look like a state the panel is about to settle into.
       const color = hsv(seed, 0.85, 1);
       const middle = (HEIGHT - 1) / 2;
-      // Starts with its point already on the panel rather than sliding in from
-      // off-screen, so no frame of the sweep is blank.
-      const lead = 0.5 + sawtooth(t, SWITCH_DURATION) * (WIDTH + 10);
+      // Starts with the leading head already on the panel and ends with the last
+      // one clear of it, so no frame of the sweep is blank.
+      const travel = WIDTH + SWITCH_HEADS * SWITCH_SPACING + SWITCH_DEPTH;
+      const lead = 0.5 + sawtooth(t, SWITCH_DURATION) * travel;
 
-      for (let y = 0; y < HEIGHT; y++) {
-        // The head is a diagonal, so the arrow has a point rather than an edge.
-        const head = lead - Math.abs(y - middle);
+      for (let head = 0; head < SWITCH_HEADS; head++) {
+        // Each one dimmer than the one ahead of it, which is what gives the row
+        // of them a direction rather than just a rhythm.
+        const strength = 1 - head * 0.28;
+        const origin = lead - head * SWITCH_SPACING;
 
-        for (let depth = 0; depth < 3; depth++) {
-          frame.add(Math.round(head - depth), y, scale(color, 1 - depth * 0.22));
-        }
+        for (let y = 0; y < HEIGHT; y++) {
+          // The point is a diagonal, so a head is an arrow rather than a bar.
+          const tip = origin - Math.abs(y - middle);
 
-        // A tail on the middle rows only, which is what makes the whole thing
-        // read as one arrow rather than a moving diagonal line.
-        if (Math.abs(y - middle) > 1) continue;
+          for (let depth = 0; depth < SWITCH_DEPTH; depth++) {
+            const x = Math.round(tip - depth);
 
-        for (let x = 0; x < Math.round(head) - 2; x++) {
-          frame.add(x, y, scale(color, 0.45));
+            frame.add(mirrored ? WIDTH - 1 - x : x, y, scale(color, strength * (1 - depth * 0.3)));
+          }
         }
       }
     },

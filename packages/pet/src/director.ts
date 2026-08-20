@@ -49,7 +49,10 @@ export const createDirector = ({
   interval = DEFAULT_INTERVAL,
   random = Math.random,
 }: DirectorOptions = {}): Director => {
-  let active: { scene: Scene; startedAt: number; seed: number } | null = null;
+  let active: { scene: Scene; startedAt: number; seed: number; mirrored: boolean } | null = null;
+  // Alternates across playings of any scene that asks for it, which is why it
+  // lives here rather than in the scene: a scene sees one frame at a time.
+  let mirrored = false;
   let nextAt: number | null = null;
   let lastStatus: Status | null = null;
 
@@ -61,9 +64,11 @@ export const createDirector = ({
   };
 
   const start = (scene: Scene, now: number, fatigue: number) => {
-    // Drawn once per playing rather than per frame, or a scene using it would
-    // strobe instead of holding one colour for its run.
-    active = { scene, startedAt: now, seed: random() };
+    if (scene.mirrors) mirrored = !mirrored;
+
+    // Drawn once per playing rather than per frame, or a scene using them would
+    // strobe instead of holding one colour and one direction for its run.
+    active = { scene, startedAt: now, seed: random(), mirrored };
     schedule(now, fatigue);
   };
 
@@ -105,7 +110,7 @@ export const createDirector = ({
     // breathing and its blink carry on across an antic instead of restarting.
     const elapsed = active ? now - active.startedAt : now;
 
-    scene.paint(frame, elapsed, state, active?.seed ?? 0);
+    scene.paint(frame, elapsed, state, active?.seed ?? 0, active?.mirrored ?? false);
 
     // Over the top of whatever just painted, and on the wall clock rather than the
     // scene's, so it blinks at one rate throughout.
