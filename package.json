@@ -1,0 +1,36 @@
+{
+  "name": "claude-status",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "start": "turbo start",
+    "lint": "turbo lint",
+    "lint:fix": "turbo lint:fix",
+    "typecheck": "turbo typecheck",
+    "test": "turbo test",
+    "firmware:build": "pio run -d firmware",
+    "firmware:flash": "pio run -d firmware -t upload",
+    "firmware:monitor": "pio device monitor -d firmware"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.5.6",
+    "@commitlint/cli": "^21.2.2",
+    "@commitlint/config-conventional": "^21.2.0",
+    "knip": "^6.31.0",
+    "lefthook": "^2.1.10",
+    "turbo": "^2.10.9",
+    "vitest": "^4.1.10"
+  },
+  "engines": {
+    "node": ">=24",
+    "npm": ">=11.6"
+  },
+  "packageManager": "npm@11.17.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ]
+}
