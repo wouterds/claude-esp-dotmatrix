@@ -14,4 +14,3 @@ export {
   writeDesire,
 } from "./store";
 export { CONTEXT_LIMIT, findLatestTranscript, readUsage, type Usage } from "./usage";
-export { readWindow } from "./window";
