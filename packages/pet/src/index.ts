@@ -14,4 +14,13 @@ export {
   STATUSES,
   type Status,
 } from "./state";
+export {
+  type Cell,
+  DEFAULT_DESIRE,
+  type Desire,
+  home,
+  readDesire,
+  stateFile,
+  writeDesire,
+} from "./store";
 export { CONTEXT_LIMIT, findLatestTranscript, readUsage, type Usage } from "./usage";
