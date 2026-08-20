@@ -196,11 +196,17 @@ const ACCENTS: Partial<Record<Status, (frame: Frame, t: number, color: Color) =>
     }
   },
 
-  working: (frame, t, color) => {
+  // A laser rather than a marker: the whole height of the panel, quota rows
+  // included, and in its own pink rather than the status colour so it reads as a
+  // beam crossing everything rather than as part of whatever it happens to cross.
+  //
+  // It only ever adds, so it passes over the two number rows and brightens them
+  // without being able to eat into either bar.
+  working: (frame, t) => {
     const x = Math.round(pulse(t, 1.6) * (WIDTH - 1));
 
-    for (let y = FACE_TOP; y < FACE_TOP + FACE_ROWS; y++) {
-      frame.add(x, y, scale(color, 0.35));
+    for (let y = 0; y < HEIGHT; y++) {
+      frame.add(x, y, scale(PINK, 0.7));
     }
   },
 
