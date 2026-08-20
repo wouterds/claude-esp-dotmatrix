@@ -23,12 +23,15 @@ export const GAUGE_BANDS: readonly { readonly upTo: number; readonly color: Colo
   { upTo: 0.4, color: hex("#4ec95a") },
   { upTo: 0.6, color: hex("#e8d047") },
   { upTo: 0.8, color: hex("#e8933a") },
-  { upTo: 1, color: hex("#e04040") },
+  { upTo: 1, color: hex("#b0392a") },
 ];
 
 // What the face is tinted towards as the context window fills. The same red the
 // gauge ends on, so the two halves of the panel agree about how bad it is.
-export const EXHAUSTED = hex("#e04040");
+//
+// Warm and dark rather than bright. A saturated red reads as an alarm - something
+// has gone wrong - where a filling window is only the session getting on with it.
+export const EXHAUSTED = hex("#b0392a");
 
 export const WHITE = hex("#ffffff");
 export const PINK = hex("#ff5f8f");
