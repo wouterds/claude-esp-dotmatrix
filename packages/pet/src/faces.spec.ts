@@ -55,8 +55,8 @@ describe("drawFace", () => {
     drawFace(blushing, "happy", white);
     drawFace(plain, "focused", white);
 
-    expect(blushing.get(1, 6)).not.toEqual([0, 0, 0]);
-    expect(plain.get(1, 6)).toEqual([0, 0, 0]);
+    expect(blushing.get(0, 4)).not.toEqual([0, 0, 0]);
+    expect(plain.get(0, 4)).toEqual([0, 0, 0]);
   });
 
   it("a glance moves the eyes sideways and leaves the mouth put", () => {
