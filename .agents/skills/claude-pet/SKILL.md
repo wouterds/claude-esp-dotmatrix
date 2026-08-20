@@ -14,6 +14,10 @@ event to `.claude/hooks/status.mjs`, so status follows the session with nothing
 asked of you. What this skill is for is the half hooks cannot do: getting the
 daemon up, proving the panel is right, and the deliberate moments.
 
+**Those hooks only fire in this repo.** `npx status-install` puts the same one in
+the user's own settings so the pet works in every project - a dry run by default,
+`--write` to apply.
+
 ## Bring it up
 
 One process owns the serial port. Everything else writes a file.
@@ -43,6 +47,7 @@ nohup npx tsx apps/daemon/src/index.ts >> ~/.claude-status/daemon.log 2>&1 &
 | daemon not running | nothing is driving it |
 | brightness 0 | it is being driven, at nothing |
 | painted cells | someone left `status-pixel` holding the panel - `--clear` |
+| no sessions | no hooks are wired here - `npx status-install` |
 
 ## What it is showing
 
@@ -64,10 +69,29 @@ Mood comes from how full the window is rather than from what is happening: past
 three quarters it looks tired, past 95% it gives out. That is the reading the
 gauge and the face agree on.
 
+**One pulsing pixel in the top right corner** means a *different* session is
+blocked on the user. The panel is already saying what this session is doing;
+that pixel is the only way it can say both at once.
+
+## Several sessions at once
+
+Every session reports itself, and the panel speaks for **whichever the user typed
+into most recently** - not the busiest one. Two sessions grinding both fire hooks
+several times a second, so ranking on activity would flicker between them.
+
+A session stops counting once it goes quiet: ninety seconds for anything active,
+half an hour for `waiting` (nothing changes there until the user acts), five
+minutes for `error`. When none are left the panel goes idle rather than holding
+the last thing it saw.
+
+`npx status-show` lists them, newest first, and marks the one being spoken for.
+That is the command for "which of my four sessions needs me".
+
 ## Driving it deliberately
 
 ```bash
-npx status-set thinking            # hooks do this; you rarely need to
+npx status-set thinking            # pins the panel - hooks do this, you rarely need to
+npx status-set --auto              # release the pin, follow the sessions again
 npx status-play heart              # --list for all eleven
 npx status-pixel 0,0,#ff0000       # individual pixels, pet off duty
 npx status-pixel --clear           # hand the panel back
@@ -123,3 +147,5 @@ frame having been sent.
   one
 - **`status-pixel` is a takeover.** Leaving cells set leaves the pet off duty for
   the rest of the session
+- **`status-set` pins the panel** until `--auto` releases it. Set it and forget,
+  and the pet stops following the session it is supposed to be showing
