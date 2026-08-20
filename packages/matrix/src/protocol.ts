@@ -7,7 +7,11 @@ export const FRAME_BYTES = LED_COUNT * 3;
 // exceed its 450 mA budget, so this ceiling is about how the pet looks rather
 // than about the supply - above it a dark room gets a nightlight.
 export const MAX_BRIGHTNESS = 96;
-export const DEFAULT_BRIGHTNESS = 32;
+
+// Low, because this sits an arm's length away in a lit room rather than across
+// one. 48 was measured as "I'm blind" on a desk; single digits are the working
+// range and the ceiling is there for a bright room, not for normal use.
+export const DEFAULT_BRIGHTNESS = 6;
 
 const MAGIC_0 = 0xc1;
 const MAGIC_1 = 0xa0;
