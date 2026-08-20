@@ -5,19 +5,25 @@ import {
   ANTIC_NAMES,
   anticNamed,
   createDirector,
-  deriveMood,
+  type Desire,
   findLatestTranscript,
-  type PetState,
+  pickSession,
   readDesire,
+  readSessions,
   readUsage,
+  resolveState,
+  type SessionSnapshot,
 } from "@claude-status/pet";
 import { muted, name } from "../utils/colors";
 import { renderFrame, rewind } from "../utils/terminal";
 import { help, run, type Usage } from "../utils/usage";
 
-// The panel, in the terminal. Written because the scenes were built without
-// anyone able to see the LEDs, and it stayed because it is the fastest way to
+// The panel, in the terminal. Written because these scenes were built by someone
+// who could not see the LEDs, and kept because it is still the fastest way to
 // judge whether a face reads at eight by eight.
+//
+// It resolves through the same resolveState the daemon uses. A preview that
+// drifts from the panel is worse than no preview.
 
 const FPS = 20;
 
@@ -65,27 +71,26 @@ run(async () => {
   const director = createDirector();
   const started = Date.now();
 
-  let desire = await readDesire();
-  let fill = 0;
-  let tokens = 0;
+  let desire: Desire = await readDesire();
+  let snapshots: SessionSnapshot[] = [];
+  let reading = { tokens: 0, fill: 0 };
 
   const refresh = async () => {
     desire = await readDesire();
+    snapshots = await readSessions();
 
-    const transcript = await findLatestTranscript();
+    // The session being shown, so the gauge belongs to the face above it.
+    const shown = pickSession(snapshots, Date.now());
+    const transcript = shown?.transcript ?? (await findLatestTranscript());
     const usage = transcript ? await readUsage(transcript) : null;
 
-    if (usage) {
-      fill = usage.fill;
-      tokens = usage.tokens;
-    }
+    if (usage) reading = { tokens: usage.tokens, fill: usage.fill };
   };
 
   await refresh();
   const poller = setInterval(refresh, 1_000);
 
-  const label = options.antic ?? "live";
-  console.log(`${name(label)} ${muted("- ctrl-c to stop")}`);
+  console.log(`${name(options.antic ?? "live")} ${muted("- ctrl-c to stop")}`);
   console.log("\n".repeat(HEIGHT - 1));
 
   const timer = setInterval(
@@ -99,12 +104,7 @@ run(async () => {
       }
 
       const frame = createFrame();
-      const state: PetState = {
-        status: desire.status,
-        mood: desire.mood ?? deriveMood(desire.status, fill),
-        fill,
-        tokens,
-      };
+      const { state } = resolveState(desire, snapshots, reading, Date.now());
 
       if (options.antic) {
         const scene = anticNamed(options.antic)!;

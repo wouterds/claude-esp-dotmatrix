@@ -12,8 +12,9 @@ import {
 import { muted, name } from "../utils/colors";
 import { help, run, type Usage } from "../utils/usage";
 
-// What the session is doing. Every hook in .claude/hooks calls this and nothing
-// else, so it has to be cheap and it has to never fail loudly.
+// An override, and only that. The hooks report each session for themselves and
+// the daemon follows whichever was heard from last, so setting a status here
+// pins the panel until --auto releases it.
 
 const USAGE: Usage = {
   name: "status-set",
@@ -22,19 +23,21 @@ const USAGE: Usage = {
     ["status-set thinking", "the model is reasoning"],
     ["status-set error", "something failed - the pet stops being interrupted"],
     ["status-set idle --mood tired", "override the mood it would have picked"],
-    ["status-set working --mood auto", "hand the mood back to the pet"],
+    ["status-set --auto", "stop overriding - follow whichever session is live"],
   ],
   args: [
     [`<status>`, STATUSES.join(", ")],
     [`--mood <mood>`, `${MOODS.join(", ")}, or auto`],
+    ["--auto", "stop overriding, follow the sessions again"],
   ],
 };
 
-type Options = { status: Status; mood: Mood | null | undefined };
+type Options = { status: Status | null; mood: Mood | null | undefined };
 
 const parse = (argv: string[]): Options => {
   help(USAGE, argv);
 
+  const auto = argv.includes("--auto");
   let status: Status | null = null;
   let mood: Mood | null | undefined;
 
@@ -51,6 +54,8 @@ const parse = (argv: string[]): Options => {
       } else {
         throw new Error(`--mood takes one of: ${MOODS.join(", ")}, auto`);
       }
+    } else if (arg === "--auto") {
+      // Handled above.
     } else if (arg?.startsWith("-")) {
       throw new Error(`Unknown flag: ${arg}`);
     } else if (arg) {
@@ -61,9 +66,11 @@ const parse = (argv: string[]): Options => {
     }
   }
 
-  if (!status) throw new Error(`Usage: status-set <${STATUSES.join("|")}> [--mood <mood>]`);
+  if (!status && !auto) {
+    throw new Error(`Usage: status-set <${STATUSES.join("|")}> [--mood <mood>] | --auto`);
+  }
 
-  return { status, mood };
+  return { status: auto ? null : status, mood };
 };
 
 run(async () => {
@@ -71,5 +78,7 @@ run(async () => {
   const patch = options.mood === undefined ? { status: options.status } : options;
   const desire = await writeDesire(patch);
 
-  console.log(`${name(desire.status)} ${muted(desire.mood ?? "mood auto")}`);
+  console.log(
+    `${name(desire.status ?? "following the sessions")} ${muted(desire.mood ?? "mood auto")}`,
+  );
 });

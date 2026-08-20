@@ -1,13 +1,17 @@
 #!/usr/bin/env -S npx tsx
 
 import { readFile } from "node:fs/promises";
+import { basename } from "node:path";
 import { findBoard, MAX_BRIGHTNESS } from "@claude-status/matrix";
 import {
-  deriveMood,
   findLatestTranscript,
+  isLive,
+  pickSession,
   pidFile,
   readDesire,
+  readSessions,
   readUsage,
+  resolveState,
 } from "@claude-status/pet";
 import { bad, figure, good, heading, muted, name, pressure } from "../utils/colors";
 import { help, run, type Usage } from "../utils/usage";
@@ -17,8 +21,8 @@ import { help, run, type Usage } from "../utils/usage";
 
 const USAGE: Usage = {
   name: "status-show",
-  summary: "what the pet is showing, and whether anything is driving it",
-  examples: [["status-show", "status, mood, window, board and daemon"]],
+  summary: "what the pet is showing, which session it speaks for, and what is driving it",
+  examples: [["status-show", "the panel, every live session, the board and the daemon"]],
   args: [],
 };
 
@@ -39,28 +43,35 @@ const daemon = async () => {
 
 const row = (label: string, value: string) => `${muted(label.padEnd(12))}${value}`;
 
+const ago = (at: number, now: number) => {
+  const seconds = Math.round((now - at) / 1_000);
+  if (seconds < 60) return `${seconds}s ago`;
+
+  return `${Math.round(seconds / 60)}m ago`;
+};
+
 run(async () => {
   help(USAGE, process.argv.slice(2));
 
-  const [desire, pid, port, transcript] = await Promise.all([
+  const now = Date.now();
+  const [desire, snapshots, pid, port] = await Promise.all([
     readDesire(),
+    readSessions(),
     daemon(),
     findBoard(),
-    findLatestTranscript(),
   ]);
 
+  const shown = pickSession(snapshots, now);
+  const transcript = shown?.transcript ?? (await findLatestTranscript());
   const usage = transcript ? await readUsage(transcript) : null;
-  const fill = usage?.fill ?? 0;
+  const reading = { tokens: usage?.tokens ?? 0, fill: usage?.fill ?? 0 };
+  const { state } = resolveState(desire, snapshots, reading, now);
 
   const lines = [
-    heading("pet"),
-    row("status", name(desire.status)),
-    row(
-      "mood",
-      desire.mood
-        ? `${name(desire.mood)} ${muted("set")}`
-        : `${name(deriveMood(desire.status, fill))} ${muted("auto")}`,
-    ),
+    heading("panel"),
+    row("status", `${name(state.status)} ${muted(desire.status ? "override" : "from session")}`),
+    row("mood", `${name(state.mood)} ${muted(desire.mood ? "set" : "auto")}`),
+    row("attention", state.attention ? figure("another session is waiting") : muted("none")),
     row(
       "showing",
       desire.paint
@@ -72,17 +83,37 @@ run(async () => {
     row(
       "tokens",
       usage
-        ? `${pressure(figure(usage.tokens.toLocaleString("en-US")), fill)} ${muted(`of ${(usage.limit).toLocaleString("en-US")}`)}`
+        ? `${pressure(figure(usage.tokens.toLocaleString("en-US")), reading.fill)} ${muted(`of ${usage.limit.toLocaleString("en-US")}`)}`
         : muted("no transcript found"),
     ),
-    row("full", usage ? pressure(`${Math.round(fill * 100)}%`, fill) : muted("-")),
+    row("full", usage ? pressure(`${Math.round(reading.fill * 100)}%`, reading.fill) : muted("-")),
+    "",
+    heading("sessions"),
+  ];
+
+  if (snapshots.length === 0) {
+    lines.push(row("none", muted("no hooks have fired - see status-install")));
+  }
+
+  // Newest first, and the one being spoken for is marked. With four sessions
+  // open the useful question is which of them the panel means.
+  for (const snapshot of [...snapshots].sort((a, b) => b.at - a.at)) {
+    const live = isLive(snapshot, now);
+    const marker = snapshot.id === shown?.id ? figure("->") : "  ";
+    const where = snapshot.cwd ? basename(snapshot.cwd) : snapshot.id.slice(0, 8);
+    const label = live ? name(snapshot.status) : muted(snapshot.status);
+
+    lines.push(`${marker} ${where.padEnd(24)}${label.padEnd(20)}${muted(ago(snapshot.at, now))}`);
+  }
+
+  lines.push(
     "",
     heading("hardware"),
     row("board", port ? good(port) : bad("not found on usb")),
     row("daemon", pid ? good(`running as pid ${pid}`) : bad("not running - npm start")),
     row("brightness", `${desire.brightness} ${muted(`of ${MAX_BRIGHTNESS}`)}`),
     row("rotation", `${desire.rotation}${muted("deg")}`),
-  ];
+  );
 
   console.log(lines.join("\n"));
 });
