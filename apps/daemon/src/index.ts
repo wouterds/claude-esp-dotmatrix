@@ -116,6 +116,14 @@ const render = () => {
     }
   } else {
     const resolved = resolveState(desire, snapshots, usage, Date.now());
+
+    // A sweep when the panel changes hands, so a switch is something you see
+    // rather than something you notice the aftermath of. Only on a move between
+    // two sessions: arriving from nothing is the pet waking up, not a switch.
+    if (resolved.session && session && resolved.session.id !== session.id) {
+      director.play("switch", clock());
+    }
+
     session = resolved.session;
 
     director.paint(frame, clock(), resolved.state);

@@ -31,7 +31,7 @@ export const createDirector = ({
   interval = DEFAULT_INTERVAL,
   random = Math.random,
 }: DirectorOptions = {}): Director => {
-  let active: { scene: Scene; startedAt: number } | null = null;
+  let active: { scene: Scene; startedAt: number; seed: number } | null = null;
   let nextAt: number | null = null;
   let lastStatus: Status | null = null;
 
@@ -41,7 +41,9 @@ export const createDirector = ({
   };
 
   const start = (scene: Scene, now: number) => {
-    active = { scene, startedAt: now };
+    // Drawn once per playing rather than per frame, or a scene using it would
+    // strobe instead of holding one colour for its run.
+    active = { scene, startedAt: now, seed: random() };
     schedule(now);
   };
 
@@ -71,7 +73,7 @@ export const createDirector = ({
     // breathing and its blink carry on across an antic instead of restarting.
     const elapsed = active ? now - active.startedAt : now;
 
-    scene.paint(frame, elapsed, state);
+    scene.paint(frame, elapsed, state, active?.seed ?? 0);
   };
 
   const play: Director["play"] = (name, now) => {

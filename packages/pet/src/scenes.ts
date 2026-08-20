@@ -10,7 +10,12 @@ export type Scene = {
   name: string;
   /** Seconds. Null runs until something replaces it. */
   duration: number | null;
-  paint: (frame: Frame, elapsed: number, state: PetState) => void;
+  /**
+   * `seed` is 0 to 1, fixed for one playing of the scene. It is an argument
+   * rather than a call to Math.random inside, so a scene stays a pure function
+   * of its inputs and a spec can still assert what it drew.
+   */
+  paint: (frame: Frame, elapsed: number, state: PetState, seed?: number) => void;
 };
 
 const pulse = (t: number, period: number) => 0.5 + 0.5 * Math.sin((t / period) * TAU);
@@ -240,7 +245,51 @@ export const ANTICS: readonly Scene[] = [
   glyphScene("cross", CROSS, STATUS_COLORS.error, 1.4),
 ];
 
-export const anticNamed = (name: string): Scene | null =>
-  ANTICS.find((antic) => antic.name === name) ?? null;
+// Scenes that mean something, and so are never picked at random. A directional
+// sweep that turns up on its own reads as "you switched sessions" when nothing
+// happened, which is worse than not having it.
+const SWITCH_DURATION = 1.3;
 
-export const ANTIC_NAMES = ANTICS.map((antic) => antic.name);
+export const SIGNALS: readonly Scene[] = [
+  {
+    name: "switch",
+    duration: SWITCH_DURATION,
+    // One arrow the size of the panel, flying across and dragging a tail behind
+    // it. A hand-over is the one event here that is about two things rather than
+    // one, so it gets the whole display rather than a corner of it.
+    paint: (frame, t, _state, seed = 0) => {
+      // A different colour each time, so two switches in a row read as two
+      // events. Status colour would be the obvious choice and is the wrong one:
+      // it makes the sweep look like a status the panel is about to settle on.
+      const color = hsv(seed, 0.85, 1);
+      const middle = (HEIGHT - 1) / 2;
+      // Starts with its point already on the panel rather than sliding in from
+      // off-screen, so no frame of the sweep is blank.
+      const lead = 0.5 + sawtooth(t, SWITCH_DURATION) * (WIDTH + 10);
+
+      for (let y = 0; y < HEIGHT; y++) {
+        // The head is a diagonal, so the arrow has a point rather than an edge.
+        const head = lead - Math.abs(y - middle);
+
+        for (let depth = 0; depth < 3; depth++) {
+          frame.add(Math.round(head - depth), y, scale(color, 1 - depth * 0.22));
+        }
+
+        // A tail on the middle rows only, which is what makes the whole thing
+        // read as one arrow rather than a moving diagonal line.
+        if (Math.abs(y - middle) > 1) continue;
+
+        for (let x = 0; x < Math.round(head) - 2; x++) {
+          frame.add(x, y, scale(color, 0.45));
+        }
+      }
+    },
+  },
+];
+
+const NAMED = [...ANTICS, ...SIGNALS];
+
+export const anticNamed = (name: string): Scene | null =>
+  NAMED.find((scene) => scene.name === name) ?? null;
+
+export const ANTIC_NAMES = NAMED.map((scene) => scene.name);

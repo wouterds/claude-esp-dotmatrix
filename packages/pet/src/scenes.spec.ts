@@ -1,6 +1,6 @@
 import { createFrame, HEIGHT, WIDTH } from "@claude-status/matrix";
 import { describe, expect, it } from "vitest";
-import { ANTICS, anticNamed, drawGauge, STATUS_SCENE } from "./scenes";
+import { ANTICS, anticNamed, drawGauge, SIGNALS, STATUS_SCENE } from "./scenes";
 import { deriveMood, type PetState, STATUSES } from "./state";
 
 const stateAt = (fill: number, status: PetState["status"] = "thinking"): PetState => ({
@@ -122,14 +122,14 @@ describe("STATUS_SCENE", () => {
 
 describe("ANTICS", () => {
   it("all end, or the pet would never return to showing status", () => {
-    for (const antic of ANTICS) {
+    for (const antic of [...ANTICS, ...SIGNALS]) {
       expect(antic.duration, antic.name).toBeGreaterThan(0);
       expect(antic.duration, antic.name).toBeLessThan(10);
     }
   });
 
   it("all light something across their run", () => {
-    for (const antic of ANTICS) {
+    for (const antic of [...ANTICS, ...SIGNALS]) {
       for (const fraction of [0.05, 0.35, 0.7]) {
         const frame = createFrame();
         antic.paint(frame, antic.duration! * fraction, stateAt(0.4, "idle"));
@@ -145,9 +145,21 @@ describe("ANTICS", () => {
   });
 
   it("have distinct names, since that is how one is asked for", () => {
-    const names = ANTICS.map((antic) => antic.name);
+    const names = [...ANTICS, ...SIGNALS].map((scene) => scene.name);
 
     expect(new Set(names).size).toBe(names.length);
+  });
+
+  it("keep signals out of the random pool, so a sweep always means something", () => {
+    const pool = ANTICS.map((antic) => antic.name);
+
+    for (const signal of SIGNALS) {
+      expect(pool, signal.name).not.toContain(signal.name);
+    }
+  });
+
+  it("still let a signal be asked for by name", () => {
+    expect(anticNamed("switch")?.name).toBe("switch");
   });
 
   it("paint the same pixels for the same moment, twinkle included", () => {
