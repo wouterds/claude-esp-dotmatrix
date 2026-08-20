@@ -53,13 +53,11 @@ describe("toBytes", () => {
     expect(frame.toBytes()[0]).toBe(gammaCorrect(128));
   });
 
-  it("walks the chain down a column before moving right, unrotated", () => {
+  it("walks the chain across a row before moving down, unrotated", () => {
     const frame = createFrame();
     frame.set(1, 2, [255, 255, 255]);
 
-    // Column 1, row 2 - not row 2, column 1. Getting these the wrong way round
-    // transposes the panel, and a transpose is not a rotation.
-    expect(litIndices(frame.toBytes(0))).toEqual([1 * 8 + 2]);
+    expect(litIndices(frame.toBytes(0))).toEqual([2 * 8 + 1]);
   });
 
   it("keeps the two axes distinct, which is what a transpose would break", () => {
@@ -68,8 +66,9 @@ describe("toBytes", () => {
     alongX.set(1, 0, [255, 255, 255]);
     alongY.set(0, 1, [255, 255, 255]);
 
-    expect(litIndices(alongX.toBytes(0))).toEqual([8]);
-    expect(litIndices(alongY.toBytes(0))).toEqual([1]);
+    // One step along x is one LED; one step along y is a whole row.
+    expect(litIndices(alongX.toBytes(0))).toEqual([1]);
+    expect(litIndices(alongY.toBytes(0))).toEqual([8]);
   });
 
   it("turns the top left pixel through each corner in quarter turns", () => {
@@ -80,7 +79,7 @@ describe("toBytes", () => {
       return litIndices(frame.toBytes(rotation as 0 | 90 | 180 | 270))[0];
     });
 
-    expect(corners).toEqual([0, 56, 63, 7]);
+    expect(corners).toEqual([0, 7, 63, 56]);
   });
 
   it("is reversible - four quarter turns of a shape land back on themselves", () => {

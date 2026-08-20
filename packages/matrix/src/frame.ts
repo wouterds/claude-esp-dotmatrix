@@ -1,11 +1,16 @@
 import { BLACK, type Color, gammaCorrect } from "./color";
 import { FRAME_BYTES, HEIGHT, WIDTH } from "./protocol";
 
-// The module chains its 64 LEDs down the first column, then down the second -
-// top to bottom, left to right. Assuming the other way round transposes the
-// panel, which is a reflection and so is not fixable by any rotation: an
-// orientation marker comes back with its two arms swapped rather than turned.
-const chainIndex = (column: number, row: number) => column * HEIGHT + row;
+// The module chains its 64 LEDs across the first row, then across the second -
+// left to right, top to bottom.
+//
+// This was briefly "fixed" to column-major on the strength of an orientation
+// marker whose arms came back swapped. They had not: the firmware was driving an
+// RGB strip as GRB, which swaps red and green and so swapped the two arms'
+// colours rather than their positions. Transposing the panel to correct a colour
+// bug then made an up arrow point left, which is the shape of the mistake -
+// check the colours are right before believing anything about the geometry.
+const chainIndex = (column: number, row: number) => row * WIDTH + column;
 
 // Which way up the panel ends on a desk is the owner's business, so every scene
 // draws in one orientation and the buffer is turned on its way to the wire.
