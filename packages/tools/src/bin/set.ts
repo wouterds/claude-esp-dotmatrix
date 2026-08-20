@@ -23,12 +23,12 @@ const USAGE: Usage = {
     ["status-set thinking", "the model is reasoning"],
     ["status-set error", "something failed - the pet stops being interrupted"],
     ["status-set idle --mood tired", "override the mood it would have picked"],
-    ["status-set --auto", "stop overriding - follow whichever session is live"],
+    ["status-set --auto", "drop status and mood overrides both"],
   ],
   args: [
     [`<status>`, STATUSES.join(", ")],
     [`--mood <mood>`, `${MOODS.join(", ")}, or auto`],
-    ["--auto", "stop overriding, follow the sessions again"],
+    ["--auto", "drop both overrides, follow the sessions again"],
   ],
 };
 
@@ -70,7 +70,11 @@ const parse = (argv: string[]): Options => {
     throw new Error(`Usage: status-set <${STATUSES.join("|")}> [--mood <mood>] | --auto`);
   }
 
-  return { status: auto ? null : status, mood };
+  // --auto releases both. It reads as "stop overriding", and a mood left pinned
+  // by it is a face that stops following the session with nothing saying why.
+  if (auto) return { status: null, mood: null };
+
+  return { status, mood };
 };
 
 run(async () => {
