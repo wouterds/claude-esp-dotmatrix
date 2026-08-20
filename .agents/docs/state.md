@@ -77,6 +77,75 @@ with the face for a panel this size.
 It counts the session being shown as well as the others. That one is still a chat
 that wants you.
 
+## The gauge
+
+Row 7, and it is the only row with a number on it. Green to 40%, yellow to 60%,
+orange to 80%, red beyond - four bands rather than a gradient, because "it is
+orange" is a faster read than "it is somewhere between amber and orange". The
+leading pixel dims by the fraction of it in use, so the row has eight times the
+resolution its eight pixels suggest.
+
+**An accent may brighten it; it may never shorten it.** The spinner crosses the
+whole edge, that row included, and is drawn after it so it passes over rather than
+behind. A spec holds the invariant, because a bar something could eat into would
+read as a smaller number.
+
+## What the eyes are made of
+
+Diagonals only - crosses, arrows and lids. Which shape goes on which mood was
+worked out by looking at the panel, not reasoned about, so it is recorded here:
+
+| shape | reads as | used for |
+| --- | --- | --- |
+| up arrows `^ ^` | cute | happy, zen |
+| full crosses | awake | focused, excited |
+| flat lid over a pupil | half shut | tired |
+| arrows turned inwards `> <` | **angry** | annoyed only |
+| one cross over the whole face | done for | dead |
+
+Two shapes were tried and rejected, and both are worth recording because they read
+as reasonable written down. The **top half of a cross** (`v v`) is a scowl, not
+fatigue. **One pixel per eye** is a fault light, not a sleepy face.
+
+Five shapes for seven moods on purpose: the status carries its own colour, so the
+eyes only have to say how the session feels.
+
+A blink has its own lids rather than borrowing tired's shape. Borrowing meant a
+blink dropped the eyes to a pixel each, which read as the face cutting out for a
+frame.
+
+## Why it reads as alive
+
+Two things, both pure functions of the clock so no scene carries state:
+
+- **A blink** every 4.3 seconds, held for a seventh of one
+- **A gaze** every 3.7 seconds: ahead for most of the interval, then one of the
+  eight directions for the rest. Hashed off the interval rather than drawn at
+  random, so it holds one direction for the whole glance
+
+The periods are prime-ish against each other on purpose, so the two drift instead
+of locking into one repeating tic. Only the eyes move for a gaze - the mouth
+staying put is what makes it read as a glance rather than the whole head turning.
+
+The eyes sit a row down from the top for the same reason: looking up shifts them by
+one, and from row 1 that put pixels on row 0, where two lit corners read as stray
+debris rather than as a face.
+
+## Running out of head
+
+Past halfway through the context window the face starts to give, three ways at
+once rather than picking one:
+
+| | |
+| --- | --- |
+| the eyes | half shut at 75%, one cross over the whole face at 95% |
+| the colour | tinted towards the gauge's red - a muted rose by 100%, not an alarm |
+| the pace | its own clock slows, to half speed by the time the window is gone |
+
+Tinted rather than replaced, so the status is still legible in the colour while the
+face reddens. And only the *face* slows - the accents keep real time, because a
+sluggish spinner reads as the machine lagging rather than as the pet being tired.
+
 ## The window
 
 Read from the transcript of the session being shown, not from whichever
