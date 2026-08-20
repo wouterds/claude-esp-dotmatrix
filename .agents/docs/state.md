@@ -73,8 +73,8 @@ session stays a candidate and competes with live ones as the quietest of them.
 The daemon interjects one every 24 seconds or so with a fresh window, stretching
 to two minutes with a spent one. Nothing has to ask for it.
 
-**Only `error` suppresses them.** A red flashing face is the message and an antic
-replaces the face. `waiting` used to suppress them too, and that was a bug rather
+**Only `error` and a spent quota suppress them.** A red flashing face is the
+message and an antic replaces the face. `waiting` used to suppress them too, and that was a bug rather
 than a policy: Claude Code raises a notification once a session has been idle a
 minute, so sitting at the desk doing nothing set the status to waiting and stopped
 the antics altogether - the panel went still exactly when there was most reason
@@ -131,6 +131,29 @@ whole edge, both rows included, and is drawn after them so it passes over rather
 than behind. A spec holds the invariant, because a bar something could eat into
 would read as a smaller number.
 
+## When a quota runs out
+
+Either bar reaching 100% takes the panel over: **the cross and a dead face in
+turn**, both glowing in the error red, five seconds a cycle.
+
+Not the same thing as a full context window. That is the pet running out of head
+and the face already says it. This is the account having nothing left to spend
+until the window turns over, which no amount of face can say.
+
+Alternating rather than either half holding, because a panel that never changes
+reads as a crashed one - and this is the state most likely to be stared at while
+someone works out whether the thing is still alive.
+
+The bars come back under the face for its half, and **the row that ran out takes
+the cross's red and its breath with it** rather than sitting at the top gauge
+band. The band tops out at a warm orange that reads as "nearly", and this is past
+nearly. The other row keeps its own colour, which is how you see *which* of the
+two went.
+
+Antics are suppressed throughout, the same as an error. And the cross is no
+longer in the antic pool at all: it means one thing now, so seeing it at random
+would spend the only signal this state has.
+
 ## What the eyes are made of
 
 Diagonals only - crosses, arrows and lids. Which shape goes on which mood was
@@ -183,11 +206,11 @@ once rather than picking one:
 | the colour | tinted towards the gauge's red - a muted rose by 100%, not an alarm |
 | the pace | its own clock slows, to half speed by the time the window is gone |
 | the antics | come round less often - a little under the mean with room to spare, three times it with none |
-| which antics | the energetic ones drain out of the pool and the cross takes over |
+| which antics | the energetic ones drain out of the pool and the skull takes over |
 
 The antic weights are interpolated rather than switched at a threshold, so the pet
 winds down instead of changing character in one step. A fresh session is mostly
-hearts and dancing; a spent one is mostly the cross, rarely.
+hearts and dancing; a spent one is mostly the skull, rarely.
 
 Tinted rather than replaced, so the status is still legible in the colour while the
 face reddens. And only the *face* slows - the accents keep real time, because a

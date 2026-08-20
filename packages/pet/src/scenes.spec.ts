@@ -290,6 +290,90 @@ describe("STATUS_SCENE", () => {
   });
 });
 
+describe("a spent quota", () => {
+  const at = (fiveHour: number, sevenDay: number): PetState => ({
+    ...stateAt(0.3, "thinking"),
+    fiveHour,
+    sevenDay,
+  });
+
+  // t=0 falls in the cross half of the alternation, t=3 in the face half.
+  const painted = (state: PetState, t: number) => {
+    const frame = createFrame();
+    STATUS_SCENE.paint(frame, t, state);
+
+    return frame;
+  };
+
+  it("takes the panel over when either window runs out, and not before", () => {
+    // given
+    const roomy = at(0.99, 0.99);
+    const outOfFive = at(1, 0.99);
+    const outOfWeek = at(0.99, 1);
+
+    // when
+    const [ordinary, five, week] = [roomy, outOfFive, outOfWeek].map((state) =>
+      painted(state, 0).toBytes().join(","),
+    );
+
+    // then - either window doing it, and both drawing the same thing, because at
+    // this point which one ran out is not what the panel is saying
+    expect(five).not.toBe(ordinary);
+    expect(week).toBe(five);
+  });
+
+  it("alternates rather than holding either half, so it cannot read as a crash", () => {
+    // given
+    const spent = at(1, 0.5);
+
+    // when
+    const [cross, face] = [painted(spent, 0), painted(spent, 3)];
+
+    // then
+    expect(litEverywhere(cross)).toBeGreaterThan(litEverywhere(face));
+    expect(cross.toBytes()).not.toEqual(face.toBytes());
+  });
+
+  it("brings the bars back with the face, so which window ran out stays readable", () => {
+    // given
+    const spent = at(1, 0.5);
+
+    // when
+    const frame = painted(spent, 3);
+
+    // then
+    expect(litInRow(frame, FIVE_HOUR_ROW).length).toBe(WIDTH);
+    expect(litInRow(frame, WEEKLY_ROW)).toEqual([0, 1, 2, 3]);
+  });
+
+  it("gives the row that ran out the cross's red rather than the top gauge band", () => {
+    // given - the band tops out at a warm orange that reads as "nearly", and a
+    // window with nothing left in it is past nearly.
+    const spent = at(1, 0.5);
+
+    // when
+    const frame = painted(spent, 3);
+
+    // then
+    const [spentRed, spentGreen] = frame.get(0, FIVE_HOUR_ROW);
+    const [, weeklyGreen] = frame.get(0, WEEKLY_ROW);
+    expect(spentRed).toBeGreaterThan(spentGreen);
+    expect(spentGreen).toBeLessThan(weeklyGreen);
+  });
+
+  it("leaves a row that still has room in its own band", () => {
+    // given
+    const spent = at(1, 0.2);
+
+    // when
+    const frame = painted(spent, 3);
+
+    // then - green, because a fifth of the week is still the green band
+    const [red, green] = frame.get(0, WEEKLY_ROW);
+    expect(green).toBeGreaterThan(red);
+  });
+});
+
 describe("drawAlarm", () => {
   // Sampled across a blink so the "on" half is always caught.
   const cornerOver = (waiting: number) => {
@@ -487,16 +571,28 @@ describe("anticWeight", () => {
     }
   });
 
-  it("makes the cross the likeliest single antic once there is no room left", () => {
+  it("makes the skull the likeliest single antic once there is no room left", () => {
     // given - asserted against the other antics rather than as a percentage. A
     // share depends on how many antics exist, so adding one used to break these.
+    // The cross used to hold this spot and is now reserved for a spent quota.
     const spent = 1;
 
     // when
     const likeliest = commonest(spent);
 
     // then
-    expect(likeliest).toBe("cross");
+    expect(likeliest).toBe("skull");
+  });
+
+  it("keeps the cross out of the pool entirely, since it now means one thing", () => {
+    // given
+    const pool = ANTICS.map((antic) => antic.name);
+
+    // when
+    const found = pool.includes("cross");
+
+    // then
+    expect(found).toBe(false);
   });
 
   it("makes hearts the likeliest while there is room", () => {
@@ -511,8 +607,9 @@ describe("anticWeight", () => {
   });
 
   it("hands the pool over to the grim ones as the window empties", () => {
-    // given
-    const grim = ["cross", "skull"];
+    // given - the skull is what is left of the grim end now the cross is spoken
+    // for, so this is about the share climbing rather than about a fixed figure.
+    const grim = ["skull"];
     const shareOfGrim = (fatigue: number) => {
       const total = ANTICS.reduce((sum, antic) => sum + anticWeight(antic, fatigue), 0);
 
@@ -528,8 +625,8 @@ describe("anticWeight", () => {
     const [whenFresh, whenSpent] = [shareOfGrim(0), shareOfGrim(1)];
 
     // then
-    expect(whenFresh).toBeLessThan(0.1);
-    expect(whenSpent).toBeGreaterThan(0.5);
+    expect(whenFresh).toBeLessThan(0.05);
+    expect(whenSpent).toBeGreaterThan(whenFresh * 10);
   });
 
   it("keeps hearts commoner with room than without", () => {

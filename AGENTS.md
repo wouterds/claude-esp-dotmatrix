@@ -101,6 +101,11 @@ Invisible in the code until they are broken.
 - **The face is the six rows between the bars, and its eyes are top-aligned.**
   Centred on the face rows they still read as low, because an eye takes the
   panel's centre for the face's centre
+- **Either quota at 100% takes the panel over**, alternating the cross and a dead
+  face in the error red, with antics suppressed - and the cross is out of the
+  random pool because of it. A full context window is the pet running out of
+  head and the face says it; a spent quota is the account having nothing left,
+  which no face can say
 - **Scenes are pure functions of time and state.** No scene carries anything
   between frames - the twinkle is hashed from the pixel and the step rather than
   from `Math.random` - which is why a spec can assert what was drawn

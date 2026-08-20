@@ -78,6 +78,20 @@ describe("createDirector", () => {
     }
   });
 
+  it("never interrupts a spent quota either", () => {
+    // given - nothing is going to run until the window turns over, so an antic on
+    // top would be the pet playing up about the one thing it cannot help.
+    const pet = director(1);
+    const spent = { ...state(), fiveHour: 1 };
+
+    // when / then - the sweep is the action, so it carries its own assertion
+    for (const t of [0, 1, 2, 5, 20, 100]) {
+      pet.paint(createFrame(), t, spent);
+
+      expect(pet.playing(), `spent at ${t}`).toBe("status");
+    }
+  });
+
   it("does keep playing up while a session is waiting", () => {
     // given - Claude Code raises a notification after a minute idle, so waiting
     // is the ordinary state of a pet sat on a desk. Suppressing antics through it

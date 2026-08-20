@@ -5,6 +5,7 @@ import {
   anticWeight,
   drawAlarm,
   fatigueOf,
+  isSpent,
   type Scene,
   STATUS_SCENE,
 } from "./scenes";
@@ -89,7 +90,10 @@ export const createDirector = ({
 
     if (nextAt === null) schedule(now, fatigue);
 
-    const blocked = NO_INTERRUPTIONS.includes(state.status);
+    // A spent quota holds the panel the same way an error does. Nothing is
+    // going to run until the window turns over, so an antic on top of it would
+    // be the pet playing up about the one thing it cannot do anything about.
+    const blocked = NO_INTERRUPTIONS.includes(state.status) || isSpent(state);
 
     if (state.status !== lastStatus) {
       const arrival = ARRIVALS[state.status];

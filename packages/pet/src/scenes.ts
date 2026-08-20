@@ -86,7 +86,7 @@ const BORDER: readonly [number, number][] = (() => {
   return path;
 })();
 
-export const drawBar = (frame: Frame, row: number, used: number) => {
+export const drawBar = (frame: Frame, row: number, used: number, override?: Color) => {
   const clamped = Math.max(0, Math.min(1, used));
   // Never fewer than one pixel. A known quota that happens to be empty has to
   // look different from one nothing has reported, and dark is already taken by
@@ -94,7 +94,7 @@ export const drawBar = (frame: Frame, row: number, used: number) => {
   // row that might mean either.
   const lit = Math.max(1, clamped * WIDTH);
   const band = GAUGE_BANDS.find((candidate) => clamped <= candidate.upTo) ?? GAUGE_BANDS[3];
-  const color = band.color;
+  const color = override ?? band.color;
 
   for (let x = 0; x < WIDTH; x++) {
     // The last pixel is dimmed by however much of it is filled, so a bar has
@@ -116,9 +116,15 @@ export const drawBar = (frame: Frame, row: number, used: number) => {
  * news - and the rule everywhere else here is that a gauge may understate but
  * must never overstate.
  */
-export const drawGauges = (frame: Frame, state: PetState) => {
-  if (state.sevenDay !== null) drawBar(frame, WEEKLY_ROW, state.sevenDay);
-  if (state.fiveHour !== null) drawBar(frame, FIVE_HOUR_ROW, state.fiveHour);
+export const drawGauges = (frame: Frame, state: PetState, spent?: Color) => {
+  // A row that has run out takes the cross's own red and its breath with it,
+  // rather than sitting at the top gauge band. The band tops out at a warm
+  // orange that reads as "nearly", and this is past nearly.
+  const paint = (row: number, used: number) =>
+    drawBar(frame, row, used, spent && used >= 1 ? spent : undefined);
+
+  if (state.sevenDay !== null) paint(WEEKLY_ROW, state.sevenDay);
+  if (state.fiveHour !== null) paint(FIVE_HOUR_ROW, state.fiveHour);
 };
 
 /**
@@ -251,10 +257,50 @@ export const drawAlarm = (frame: Frame, waiting: number, t: number) => {
   if (t % BLINK_PERIOD < BLINK_PERIOD / 2) frame.set(WIDTH - 1, 0, alarm);
 };
 
+/**
+ * Either quota gone. Not the same thing as a full context window - that is the
+ * pet running out of head and the face already says it - this is the account
+ * having nothing left to spend until the window turns over.
+ */
+export const isSpent = (state: PetState) =>
+  (state.fiveHour ?? 0) >= 1 || (state.sevenDay ?? 0) >= 1;
+
+// Long enough that each half is looked at rather than flickered past.
+const SPENT_HALF = 2.5;
+
+/**
+ * The cross and a dead face, alternating, both glowing in the error red.
+ *
+ * Alternating rather than either one holding, because a panel that never changes
+ * reads as a crashed one - and this is the state most likely to be stared at
+ * while someone works out whether the thing is still alive.
+ */
+const paintSpent = (frame: Frame, t: number, state: PetState) => {
+  const glow = scale(STATUS_COLORS.error, 0.35 + 0.65 * pulse(t, 1.2));
+
+  if (t % (SPENT_HALF * 2) < SPENT_HALF) {
+    drawGlyph(frame, CROSS, glow);
+
+    return;
+  }
+
+  drawFace(frame, "dead", glow);
+  // The bars come back with the face, so which of the two ran out stays
+  // readable. The cross covers them for its own half and that is the point of it.
+  // Whichever hit its limit breathes in step with the cross that just left.
+  drawGauges(frame, state, glow);
+};
+
 export const STATUS_SCENE: Scene = {
   name: "status",
   duration: null,
   paint: (frame, t, state) => {
+    if (isSpent(state)) {
+      paintSpent(frame, t, state);
+
+      return;
+    }
+
     const fatigue = fatigueOf(state.fill);
     // Tinted rather than replaced, so the status is still legible in the colour
     // while the face reddens.
@@ -529,7 +575,6 @@ export const ANTICS: readonly Scene[] = [
   // does rather than draining away with the playful ones.
   { ...glyphScene("skull", SKULL, STATUS_COLORS.error, 1.8), weight: 0.3, spentWeight: 3 },
   // Rare while there is room and the commonest thing once there is not.
-  { ...glyphScene("cross", CROSS, STATUS_COLORS.error, 1.4), weight: 1.5, spentWeight: 6 },
   ...PLAYFUL,
 ];
 
