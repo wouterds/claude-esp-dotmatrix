@@ -64,73 +64,18 @@ kinds of claim get different clocks:
 `SessionEnd` deletes the file rather than setting idle. Left behind, a closed
 session stays a candidate and competes with live ones as the quietest of them.
 
-## Two things at once
+## One dot for the chats that want you
 
-Arbitrating between "this session is working" and "that one is blocked on you"
-always loses one of them, so the panel says both: face and accent for the session
-being worked in, one pulsing corner pixel for a *different* session that is
-waiting. When the session being shown is itself waiting, the panel already says
-so and the pip is not drawn.
+Top right, blinking three times a second - fast, because it is the only thing on
+the panel that wants acting on, where the face and the gauge are information.
 
-## Why it reads as alive
+How many chats are stuck on you is in the **colour**, not in more pixels: yellow
+for one, orange for two, red for three or more, in the gauge's own three colours
+so nothing here invents a second vocabulary. A row of indicators would compete
+with the face for a panel this size.
 
-Two things, both pure functions of the clock so no scene carries state:
-
-- **A blink** every 4.3 seconds, held for a seventh of one
-- **A gaze** every 3.7 seconds: ahead for most of the interval, then one of the
-  eight directions for the rest. Hashed off the interval rather than drawn at
-  random, so it holds one direction for the whole glance
-
-The periods are prime-ish against each other on purpose, so the two drift instead
-of locking into one repeating tic. Only the eyes move for a gaze - the mouth
-staying put is what makes it read as a glance rather than the whole head turning.
-
-## Running out of head
-
-Past halfway through the context window the face starts to give, and it does it
-three ways at once rather than picking one:
-
-| | |
-| --- | --- |
-| the eyes | droop to the top half of a cross at 75%, become one full-face cross at 95% |
-| the colour | tinted towards the gauge's red - a muted rose by 100%, not an alarm |
-| the pace | its own clock slows, to half speed by the time the window is gone |
-
-Tinted rather than replaced, so the status is still legible in the colour while
-the face reddens. And only the *face* slows - the accents keep real time, because
-a sluggish spinner reads as the machine lagging rather than as the pet being
-tired.
-
-All three run off the **context** window, not the subscription's. That is the one
-the pet is running out of head in.
-
-## The two bars
-
-Row 0 and row 7 are numbers, not decoration, and the face has the six rows
-between them.
-
-| | |
-| --- | --- |
-| row 0 | how far through the rolling **session window** - cool blue, never reddens |
-| row 7 | how full the **context window** is - green to 40%, yellow to 60%, orange to 80%, red beyond |
-
-The gauge is banded rather than a gradient because "it is orange" is a faster read
-than "it is somewhere between amber and orange". Both bars dim their leading pixel
-by the fraction of it in use, so each has eight times the resolution its eight
-pixels suggest.
-
-**The session window figure cannot be read locally.** What `/usage` reports is
-fetched from the API and cached nowhere on disk - not in `stats-cache.json`, not in
-`policy-limits.json`, not in the transcripts, whose only related field is
-`service_tier`. So the bar shows what *is* exactly knowable: how far through the
-window we are, derived from message timestamps. A window anchors on the first
-message of an unbroken run and then tiles forward, so a twelve hour stretch is the
-third window rather than one long overrun.
-
-**An accent may brighten a bar; it may never shorten one.** The spinner crosses
-the whole edge, both bars included, and is drawn after them so it passes over
-rather than behind. A spec holds the invariant, because a bar something could eat
-into would read as a smaller number.
+It counts the session being shown as well as the others. That one is still a chat
+that wants you.
 
 ## The window
 

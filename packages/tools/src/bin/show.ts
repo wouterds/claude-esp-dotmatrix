@@ -73,7 +73,16 @@ run(async () => {
     heading("panel"),
     row("status", `${name(state.status)} ${muted(desire.status ? "override" : "from session")}`),
     row("mood", `${name(state.mood)} ${muted(desire.mood ? "set" : "auto")}`),
-    row("attention", state.attention ? figure("another session is waiting") : muted("none")),
+    row(
+      "waiting",
+      state.waiting > 0
+        ? `${figure(String(state.waiting))} ${muted(
+            `chat${state.waiting === 1 ? "" : "s"} blocked on you - the corner dot is ${
+              state.waiting >= 3 ? "red" : state.waiting === 2 ? "orange" : "yellow"
+            }`,
+          )}`
+        : muted("nothing"),
+    ),
     row(
       "showing",
       desire.paint

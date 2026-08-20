@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { attentionElsewhere, isLive, pickSession, type SessionSnapshot } from "./sessions";
+import { isLive, pickSession, type SessionSnapshot, waitingCount } from "./sessions";
 import type { Status } from "./state";
 
 const NOW = 1_800_000_000_000;
@@ -101,21 +101,22 @@ describe("pickSession", () => {
   });
 });
 
-describe("attentionElsewhere", () => {
-  it("flags another session blocked on the user", () => {
-    const sessions = [at(1, "working", "active"), at(300, "waiting", "parked")];
+describe("waitingCount", () => {
+  it("counts every live session blocked on the user", () => {
+    const sessions = [at(1, "working", "a"), at(30, "waiting", "b"), at(60, "waiting", "c")];
 
-    expect(attentionElsewhere(sessions, NOW, "active")).toBe(true);
+    expect(waitingCount(sessions, NOW)).toBe(2);
   });
 
-  it("does not flag the session already being shown", () => {
-    const sessions = [at(1, "waiting", "here")];
-
-    expect(attentionElsewhere(sessions, NOW, "here")).toBe(false);
+  it("counts the session being shown too - it is still a chat that wants you", () => {
+    expect(waitingCount([at(1, "waiting", "here")], NOW)).toBe(1);
   });
 
-  it("does not flag a session that has stopped waiting, or a stale one", () => {
-    expect(attentionElsewhere([at(1, "working", "other")], NOW, "here")).toBe(false);
-    expect(attentionElsewhere([at(5_000, "waiting", "other")], NOW, "here")).toBe(false);
+  it("ignores the stale ones, so an abandoned prompt stops summoning", () => {
+    expect(waitingCount([at(5_000, "waiting", "old")], NOW)).toBe(0);
+  });
+
+  it("is zero when nothing is waiting", () => {
+    expect(waitingCount([at(1, "working", "a"), at(2, "thinking", "b")], NOW)).toBe(0);
   });
 });

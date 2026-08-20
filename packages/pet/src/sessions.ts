@@ -106,18 +106,13 @@ export const pickSession = (
 };
 
 /**
- * Whether some *other* live session is blocked on the user. Answering it here
- * rather than folding it into the pick is what lets the panel say two things at
- * once: what is being worked on, and that something else is waiting.
+ * How many live sessions are blocked on the user, the one being shown included.
+ *
+ * A count rather than a flag, because one chat waiting and four chats waiting are
+ * different situations and the panel has a pixel to say which.
  */
-export const attentionElsewhere = (
-  snapshots: readonly SessionSnapshot[],
-  now: number,
-  exclude: string | null,
-): boolean =>
-  snapshots.some(
-    (snapshot) => snapshot.id !== exclude && snapshot.status === "waiting" && isLive(snapshot, now),
-  );
+export const waitingCount = (snapshots: readonly SessionSnapshot[], now: number): number =>
+  snapshots.filter((snapshot) => snapshot.status === "waiting" && isLive(snapshot, now)).length;
 
 const forgetSession = async (id: string) => {
   await unlink(join(sessionsDir(), `${id}.json`)).catch(() => {});

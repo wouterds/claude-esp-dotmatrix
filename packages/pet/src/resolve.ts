@@ -1,4 +1,4 @@
-import { attentionElsewhere, pickSession, type SessionSnapshot } from "./sessions";
+import { pickSession, type SessionSnapshot, waitingCount } from "./sessions";
 import { deriveMood, type PetState } from "./state";
 import type { Desire } from "./store";
 import type { Usage } from "./usage";
@@ -32,7 +32,7 @@ export const resolveState = (
       mood: desire.mood ?? deriveMood(status, usage.fill),
       fill: usage.fill,
       tokens: usage.tokens,
-      attention: attentionElsewhere(snapshots, now, session?.id ?? null),
+      waiting: waitingCount(snapshots, now),
     },
   };
 };

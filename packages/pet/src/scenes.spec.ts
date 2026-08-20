@@ -8,7 +8,7 @@ const stateAt = (fill: number, status: PetState["status"] = "thinking"): PetStat
   mood: deriveMood(status, fill),
   fill,
   tokens: Math.round(fill * 200_000),
-  attention: false,
+  waiting: 0,
 });
 
 const litInRow = (frame: ReturnType<typeof createFrame>, y: number) => {
@@ -125,6 +125,51 @@ describe("STATUS_SCENE", () => {
 
   it("runs until replaced rather than expiring", () => {
     expect(STATUS_SCENE.duration).toBeNull();
+  });
+});
+
+describe("the waiting dot", () => {
+  const cornerOver = (waiting: number) => {
+    // Sampled across a blink so the "on" half is always caught.
+    const seen: string[] = [];
+    for (let step = 0; step < 20; step++) {
+      const frame = createFrame();
+      STATUS_SCENE.paint(frame, step * 0.03, { ...stateAt(0.2, "working"), waiting });
+
+      const [r, g, b] = frame.get(WIDTH - 1, 0);
+      if (r || g || b) seen.push(`${r},${g},${b}`);
+    }
+
+    return seen;
+  };
+
+  it("stays dark when nothing is waiting", () => {
+    expect(cornerOver(0)).toEqual([]);
+  });
+
+  it("lights for one chat, and blinks rather than holding", () => {
+    const seen = cornerOver(1);
+
+    expect(seen.length).toBeGreaterThan(0);
+    expect(seen.length).toBeLessThan(20);
+  });
+
+  it("escalates yellow, orange, red as chats pile up", () => {
+    const [one] = cornerOver(1);
+    const [two] = cornerOver(2);
+    const [many] = cornerOver(4);
+
+    expect(new Set([one, two, many]).size).toBe(3);
+
+    // Reddening: less green each step, which is what makes it read as escalation
+    // rather than as three arbitrary colours.
+    const green = (colour: string) => Number(colour.split(",")[1]);
+    expect(green(two)).toBeLessThan(green(one));
+    expect(green(many)).toBeLessThan(green(two));
+  });
+
+  it("caps at red however many are waiting", () => {
+    expect(cornerOver(3)[0]).toBe(cornerOver(9)[0]);
   });
 });
 

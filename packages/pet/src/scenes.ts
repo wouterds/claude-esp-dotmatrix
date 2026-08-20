@@ -83,6 +83,20 @@ const fatigueOf = (fill: number) => Math.max(0, Math.min(1, (fill - 0.5) / 0.5))
 // Judged on the panel: 0.85 was harsher than it needed to be, and the eyes and
 // the gauge are already saying how bad it is.
 const TINT = 0.6;
+
+// Fast, because it is the one thing on here that wants acting on. Three a second
+// reads as a summons where the gauge and the face read as information.
+const BLINK_PERIOD = 0.34;
+
+// Escalating with the number of chats stuck on the user, in the gauge's own three
+// colours so nothing on the panel invents a fourth vocabulary.
+const alarmColor = (waiting: number): Color | null => {
+  if (waiting >= 3) return GAUGE_BANDS[3].color;
+  if (waiting === 2) return GAUGE_BANDS[2].color;
+  if (waiting === 1) return GAUGE_BANDS[1].color;
+
+  return null;
+};
 const SLOWEST = 0.5;
 
 // Prime-ish periods, so a blink and a glance drift against each other instead
@@ -152,18 +166,6 @@ const ACCENTS: Partial<Record<Status, (frame: Frame, t: number, color: Color) =>
       frame.add(x, y, scale(color, strength));
     }
   },
-
-  waiting: (frame, t, color) => {
-    const on = t % 1.4 < 0.7;
-    if (!on) return;
-
-    for (const [x, y] of [
-      [0, 0],
-      [WIDTH - 1, 0],
-    ]) {
-      frame.add(x, y, scale(color, 0.7));
-    }
-  },
 };
 
 // How lit the face itself is. Everything breathes a little, an error blinks, and
@@ -201,11 +203,12 @@ export const STATUS_SCENE: Scene = {
 
     ACCENTS[state.status]?.(frame, t, color);
 
-    // Another session is blocked on the user. One pixel, in the corner, on its
-    // own clock - the panel is already saying what this session is doing and
-    // arbitrating between the two would lose one of them.
-    if (state.attention) {
-      frame.add(WIDTH - 1, 0, scale(STATUS_COLORS.waiting, 0.4 + 0.6 * pulse(t, 1.1)));
+    // One dot, top right, blinking fast. How many chats are waiting is in the
+    // colour rather than in more pixels - the panel has one corner to spare and
+    // a row of indicators would compete with the face.
+    const alarm = alarmColor(state.waiting);
+    if (alarm && t % BLINK_PERIOD < BLINK_PERIOD / 2) {
+      frame.set(WIDTH - 1, 0, alarm);
     }
   },
 };
