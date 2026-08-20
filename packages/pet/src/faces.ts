@@ -16,9 +16,7 @@ import type { Mood } from "./state";
 const FACE_ROW = 2;
 const MOUTH_ROW = 6;
 
-// Dead is the one shape that needs the whole face, and the one that has no
-// business looking around.
-const DEAD_ROW = 1;
+// Dead is the one mood with no business looking around.
 
 // One motif: the cross, and halves of it. No hollow diamonds - an outlined
 // diamond reads as a round eye, which is the opposite of the point.
@@ -46,8 +44,15 @@ const EYES: Record<Mood, Glyph> = {
   // arrow tips, so at x=0 and x=7 a sideways glance clipped one arrow away
   // entirely rather than trimming an edge off it.
   annoyed: [".#....#.", "..#..#..", ".#....#."],
-  // One cross over the whole face rather than one per eye, and no mouth with it.
-  dead: ["#......#", ".#....#.", "..#..#..", "..#..#..", ".#....#.", "#......#"],
+  // Both arrows the same way, and no mouth with them. It reads as dazed where
+  // annoyed's `> <` reads as cross, and the two cannot be confused because no
+  // other mood turns both eyes in one direction.
+  //
+  // This was one single-pixel cross over the whole face. At eight by eight that
+  // is not a face giving out, it is a full screen X - which reads as an error
+  // the panel is reporting rather than as the pet running out of head. Inset
+  // from the edges for the same reason annoyed is.
+  dead: [".#...#..", "..#...#.", ".#...#.."],
 };
 
 // A blink is an eye almost closed, so it gets its own shape rather than borrowing
@@ -89,13 +94,11 @@ export const drawFace = (
   color: Color,
   { blink = false, gaze = [0, 0], bob = 0, wink = false }: FaceOptions = {},
 ) => {
-  const dead = mood === "dead" && !blink;
-  const row = dead ? DEAD_ROW : FACE_ROW;
-  const [dx, dy] = dead ? [0, 0] : gaze;
+  const [dx, dy] = mood === "dead" && !blink ? [0, 0] : gaze;
 
   const eyes = blink ? LID : EYES[mood];
 
-  drawGlyph(frame, wink ? winking(eyes) : eyes, color, dx, row + bob + dy);
+  drawGlyph(frame, wink ? winking(eyes) : eyes, color, dx, FACE_ROW + bob + dy);
 
   // Drawn after the eyes and never moved, so however far they look the mouth is
   // untouched. They do cross into its two columns, but rows apart from it.

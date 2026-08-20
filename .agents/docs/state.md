@@ -142,7 +142,7 @@ worked out by looking at the panel, not reasoned about, so it is recorded here:
 | full crosses | awake | focused, excited |
 | flat lid over a pupil | half shut | tired |
 | arrows turned inwards `> <` | **angry** | annoyed only |
-| one cross over the whole face | done for | dead |
+| arrows turned the same way `> >` | **dazed** | dead only |
 
 Two shapes were tried and rejected, and both are worth recording because they read
 as reasonable written down. The **top half of a cross** (`v v`) is a scowl, not
@@ -179,7 +179,7 @@ once rather than picking one:
 
 | | |
 | --- | --- |
-| the eyes | half shut at 75%, one cross over the whole face at 95% |
+| the eyes | half shut at 75%, both turned the same way at 95% |
 | the colour | tinted towards the gauge's red - a muted rose by 100%, not an alarm |
 | the pace | its own clock slows, to half speed by the time the window is gone |
 | the antics | come round less often - a little under the mean with room to spare, three times it with none |
