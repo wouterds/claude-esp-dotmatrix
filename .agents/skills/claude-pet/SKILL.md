@@ -1,0 +1,125 @@
+---
+name: claude-pet
+description: Bring the desk pet up and keep it running for a whole session - the ESP32 matrix that shows what Claude is doing, how the session is going, and how much context is left. Use when asked to start the pet, wake the matrix, show status on the display, or when the panel is dark and should not be. Runs until the session ends.
+---
+
+# Claude Pet
+
+An 8x8 RGB matrix on the desk, showing what this session is doing. A face for the
+mood, a border or a sweep for what it is busy with, and the bottom row for how
+much context window is left.
+
+**The hooks do the ordinary work.** `.claude/settings.json` wires every lifecycle
+event to `.claude/hooks/status.mjs`, so status follows the session with nothing
+asked of you. What this skill is for is the half hooks cannot do: getting the
+daemon up, proving the panel is right, and the deliberate moments.
+
+## Bring it up
+
+One process owns the serial port. Everything else writes a file.
+
+```bash
+npx status-board          # is the board on usb, and does its firmware answer
+npm start                 # the daemon - run it in the background and leave it
+npx status-show           # board, daemon, status, mood, window, all at once
+```
+
+Start the daemon with the Bash tool's **background mode** rather than a
+foreground call - it never returns. A backgrounded task ends with the session,
+which is the right lifetime: the pet exists to show *this* session.
+
+To outlive the session instead:
+
+```bash
+mkdir -p ~/.claude-status
+nohup npx tsx apps/daemon/src/index.ts >> ~/.claude-status/daemon.log 2>&1 &
+```
+
+**A dark panel is one of four things**, and `npx status-show` names which:
+
+| | |
+| --- | --- |
+| board not found | the cable, or a hub that dropped the port |
+| daemon not running | nothing is driving it |
+| brightness 0 | it is being driven, at nothing |
+| painted cells | someone left `status-pixel` holding the panel - `--clear` |
+
+## What it is showing
+
+Read the panel as two things at once. The face is how the session is going; the
+bottom row is how much window is left, and that row is never anything else.
+
+| status | on the panel |
+| --- | --- |
+| `idle` | breathing slowly, eyes shut |
+| `thinking` | a dot orbiting the border |
+| `working` | a column sweeping side to side |
+| `reading` | a row sweeping down |
+| `running` | the border pulsing |
+| `waiting` | corners blinking - **the user's move** |
+| `error` | red, flashing, eyebrows down |
+| `done` | green, a tick, then a smile |
+
+Mood comes from how full the window is rather than from what is happening: past
+three quarters it looks tired, past 95% it gives out. That is the reading the
+gauge and the face agree on.
+
+## Driving it deliberately
+
+```bash
+npx status-set thinking            # hooks do this; you rarely need to
+npx status-play heart              # --list for all eleven
+npx status-pixel 0,0,#ff0000       # individual pixels, pet off duty
+npx status-pixel --clear           # hand the panel back
+npx status-brightness 12           # 0 to 96
+npx status-preview                 # the panel, in the terminal, no board needed
+```
+
+**The daemon already does the pet part.** It interjects an antic every 40 seconds
+or so, spread around that mean, and flips back to status when it ends. You do not
+need a loop to make it feel alive, and adding one on top only makes it noisy.
+
+What is worth doing by hand is **punctuation** - an antic at a moment that meant
+something:
+
+- `status-play heart` when the user says something kind
+- `status-play bolt` when a long build or test suite finally goes green
+- `status-play cross` when you broke something and know it
+- `status-play dance` when you shipped
+
+Keep it rare. An antic every few minutes reads as a reaction; one a minute reads
+as a screensaver.
+
+## What it will not do
+
+Two statuses are never talked over: `error`, and `waiting`. Both are the user's
+move, and a dance covering either is the difference between a pet and a
+distraction. Arriving at one also cancels whatever was mid-antic.
+
+## Which way up
+
+Not knowable from a terminal, and every face is wrong in three of the four cases.
+The panel has to be dialled in once, by someone who can see it:
+
+```bash
+npx status-orient                  # white origin, red arm +x, green arm +y
+npx status-orient --rotation 90    # try each until the legend matches
+npx status-orient --done           # clear the marker
+```
+
+**Ask the user what they see.** This is the one thing in the project that cannot
+be verified from here, so do not record it as working on the strength of the
+frame having been sent.
+
+## Rules
+
+- **Never let the pet cost the session anything.** A hook that blocks or a tool
+  that throws makes the display worse than not having one. Every write is a
+  file write, and every failure is silent on purpose
+- **One daemon.** It holds a pid lock, because two writing to one port tears the
+  panel and reads as a bad cable
+- **Stop it properly** (`SIGTERM`, or the pid in `~/.claude-status/daemon.pid`).
+  Killed harder, the last frame stays lit and a stopped pet looks like a frozen
+  one
+- **`status-pixel` is a takeover.** Leaving cells set leaves the pet off duty for
+  the rest of the session
