@@ -28,7 +28,11 @@ constexpr uint8_t CMD_CLEAR = 0x04;
 
 enum class Phase : uint8_t { Magic0, Magic1, Cmd, Len, Payload, Checksum };
 
-Adafruit_NeoPixel strip(LED_COUNT, MATRIX_PIN, NEO_GRB + NEO_KHZ800);
+// RGB, not the GRB that most WS2812 strips want. Measured, not guessed: a frame
+// of pure red came back green, which is what an RGB strip does with GRB bytes.
+// Worth stating because it also disguises itself as a geometry fault - it swaps
+// the colours of an orientation marker's arms, not their positions.
+Adafruit_NeoPixel strip(LED_COUNT, MATRIX_PIN, NEO_RGB + NEO_KHZ800);
 
 uint8_t payload[FRAME_BYTES];
 uint8_t brightness = DEFAULT_BRIGHTNESS;
