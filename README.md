@@ -3,9 +3,9 @@
 A desk pet that shows what Claude is doing.
 
 An 8x8 RGB matrix on an ESP32-S3, over USB. A face for the mood, a border or a
-sweep for what the session is busy with, the top row for how far through the
-rolling session window, and the bottom row for how much context is left. Every so
-often it stops and dances.
+sweep for what the session is busy with, the top row for how much of the week is
+spent, and the bottom row for the rolling 5h window. Every so often it stops and
+dances.
 
 ```bash
 npm install

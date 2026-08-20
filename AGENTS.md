@@ -10,7 +10,7 @@ the session is going, and how much context window is left.
 | `packages/pet` | what the pet *is*: state, mood, faces, scenes, sessions |
 | `packages/tools` | executables that answer one question or set one thing |
 | `apps/daemon` | the one process that holds the port and renders |
-| `.claude/hooks` | where status comes from, on its own |
+| `.claude/hooks` | where the status and the quotas come from, on their own |
 
 ## Stack
 
@@ -83,10 +83,20 @@ Invisible in the code until they are broken.
   hook written, so every field is checked on read. That is what makes it safe for
   the hook to stay dumb
 - **Rows 0 and 7 are numbers, and an accent may only ever brighten them.** The
-  session window is on top, the context gauge on the bottom, and the spinner
-  crosses both on purpose. A spec holds the invariant that nothing shortens a
-  bar - one that something could eat into would read as a smaller number, and
-  those two rows are the only things here that have to be true
+  week is on top, the rolling 5h window on the bottom, and the spinner crosses
+  both on purpose. A spec holds the invariant that nothing shortens a bar - one
+  that something could eat into would read as a smaller number, and those two
+  rows are the only things here that have to be true
+- **The bars are account-wide; the face is not.** The face runs on the context
+  window of the session being shown, so it still behaves like the chat you are
+  in. The two quotas are the same figures in every chat, which is what lets a row
+  show one without saying whose it is. A quota nothing has reported stays dark
+  rather than empty - "none of the week used" is the one wrong answer that looks
+  like good news
+- **`rate_limits` reaches a statusline and nothing else.** No hook payload
+  carries it, it never lands in a transcript, and nothing caches it on disk, so
+  holding the statusline slot is the only way to see it. There is one slot, so
+  `status-install` wraps whatever was in it rather than replacing it
 - **The face is the six rows between the bars, and its eyes are top-aligned.**
   Centred on the face rows they still read as low, because an eye takes the
   panel's centre for the face's centre

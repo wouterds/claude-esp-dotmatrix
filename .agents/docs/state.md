@@ -9,6 +9,7 @@ fails because of, a display.
 ```
 ~/.claude-status/
   state.json           deliberate settings and overrides - the tools write this
+  limits.json          the 5h and weekly quotas - the statusline writes this
   daemon.pid           whoever holds the port
   sessions/<id>.json   one per claude session - the hooks write these
 ```
@@ -96,18 +97,33 @@ with the face for a panel this size.
 It counts the session being shown as well as the others. That one is still a chat
 that wants you.
 
-## The gauge
+## The two gauges
 
-Row 7, and it is the only row with a number on it. Green to 40%, yellow to 60%,
-orange to 80%, a warm dark red beyond - four bands rather than a gradient, because "it is
-orange" is a faster read than "it is somewhere between amber and orange". The
-leading pixel dims by the fraction of it in use, so the row has eight times the
+Row 7 is the rolling 5h quota and row 0 is the week. Green to 40%, yellow to 60%,
+orange to 80%, a warm dark red beyond - four bands rather than a gradient, because
+"it is orange" is a faster read than "it is somewhere between amber and orange".
+The leading pixel dims by the fraction of it in use, so a row has eight times the
 resolution its eight pixels suggest.
 
-**An accent may brighten it; it may never shorten it.** The spinner crosses the
-whole edge, that row included, and is drawn after it so it passes over rather than
-behind. A spec holds the invariant, because a bar something could eat into would
-read as a smaller number.
+Both draw identically, same bands at the same brightness: **position is what tells
+them apart.** A second vocabulary for the top row - dimmer, or mirrored, or a
+colour of its own - would be one more thing to learn than a panel this size can
+carry. The 5h window is on the bottom because it is the one that bites first, and
+so the one glanced at.
+
+They are **account-wide, unlike the face above them**. The face runs on the context
+window of the session being shown, so it still behaves like the chat you are in;
+these two are the same figures in every chat, which is what lets a row show one
+without having to say whose it is.
+
+A quota nothing has reported stays **dark rather than empty**. A row defaulting to
+empty would read as "none of the week used", which is the one wrong answer here
+that looks like good news.
+
+**An accent may brighten a bar; it may never shorten one.** The spinner crosses the
+whole edge, both rows included, and is drawn after them so it passes over rather
+than behind. A spec holds the invariant, because a bar something could eat into
+would read as a smaller number.
 
 ## What the eyes are made of
 
@@ -181,6 +197,27 @@ Which context window a session runs on is not recorded in a transcript, so the
 narrowest one the reading still fits in is used. A wide session reads low early
 and corrects itself as it fills - the right way round, because a gauge that
 overstates is one nobody looks at twice. `CLAUDE_STATUS_CONTEXT` overrides it.
+
+## Where the quotas come from
+
+`rate_limits` is handed to a **statusline and to nothing else**. No hook payload
+carries it, it never reaches a transcript, and nothing caches it on disk - so
+holding the statusline slot is the only way to see it. Worth knowing because the
+obvious places to look for it are all empty, and one of them is a *stale* file:
+`ccstatusline` keeps its own `usage.json` cache, which is the same shape and can
+be months out of date.
+
+There is one slot, so `status-install` **wraps** whatever was already in it rather
+than replacing it. The wrapped command is handed the identical payload and its
+output goes out untouched, so wiring the pet in costs one node start - measured at
+510ms to 555ms against `ccstatusline` - and changes nothing on screen. `--remove`
+hands the slot back exactly as it was found.
+
+A reading is good **until its own reset and no longer**. Within one window a quota
+only ever climbs, so a file nothing has rewritten for an hour still holds the
+number, which is what keeps the panel lit between sessions without a staleness
+timeout. Past the reset it describes a window that has already started again, and
+the row goes dark rather than showing a figure for a window that is gone.
 
 ## Validation lives in the daemon
 

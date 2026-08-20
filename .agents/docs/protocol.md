@@ -53,9 +53,9 @@ out of the panel means putting far more green in than the source appears to want
 and the source ends up looking almost brown. Two rounds of "that is still bright
 red" went by before anyone checked the number.
 
-## Row 7 is the gauge
+## The edge rows are numbers
 
-The bottom row is how much context window is left and is never anything else. A
-spec holds every status accent out of it, because a trail crossing the gauge
-makes the number read high - and that number is the one thing on the panel that
-has to be true.
+Row 7 is how much of the rolling 5h quota is spent and row 0 how much of the
+week; neither is ever anything else. A spec holds every status accent out of
+them, because a trail crossing a bar makes the number read high - and those two
+numbers are the only things on the panel that have to be true.
