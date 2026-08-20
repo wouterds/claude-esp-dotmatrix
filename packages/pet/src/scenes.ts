@@ -213,7 +213,11 @@ const ACCENTS: Partial<Record<Status, (frame: Frame, t: number, color: Color) =>
   },
 
   running: (frame, t, color) => {
-    const strength = 0.25 + 0.55 * pulse(t, 0.7);
+    // The whole perimeter at once, so it has to breathe rather than flash. At
+    // its old peak of 0.8 every 0.7s it read as a border strobing around the
+    // frame, and it out-shouted the corner dot - which is meant to be the one
+    // thing here that wants acting on.
+    const strength = 0.25 + 0.35 * pulse(t, 1.5);
 
     for (const [x, y] of BORDER) {
       frame.add(x, y, scale(color, strength));
