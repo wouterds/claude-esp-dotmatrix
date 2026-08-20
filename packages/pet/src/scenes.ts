@@ -199,6 +199,23 @@ const faceBrightness = (status: Status, t: number) => {
   return 0.75 + 0.25 * pulse(t, 2.6);
 };
 
+/**
+ * The corner dot, painted over whatever scene is running rather than as part of
+ * one. One dot, top right, blinking fast: how many chats are waiting is in the
+ * colour rather than in more pixels, because a row of indicators would compete
+ * with the face.
+ *
+ * It used to live inside the status scene, which meant it vanished for the two
+ * seconds an antic was playing - and *that* is why antics were suppressed while a
+ * session was waiting. As an overlay it is always there, so they need not be.
+ */
+export const drawAlarm = (frame: Frame, waiting: number, t: number) => {
+  const alarm = alarmColor(waiting);
+  if (!alarm) return;
+
+  if (t % BLINK_PERIOD < BLINK_PERIOD / 2) frame.set(WIDTH - 1, 0, alarm);
+};
+
 export const STATUS_SCENE: Scene = {
   name: "status",
   duration: null,
@@ -223,14 +240,6 @@ export const STATUS_SCENE: Scene = {
     drawGauge(frame, state.fill);
 
     ACCENTS[state.status]?.(frame, t, color);
-
-    // One dot, top right, blinking fast. How many chats are waiting is in the
-    // colour rather than in more pixels - the panel has one corner to spare and
-    // a row of indicators would compete with the face.
-    const alarm = alarmColor(state.waiting);
-    if (alarm && t % BLINK_PERIOD < BLINK_PERIOD / 2) {
-      frame.set(WIDTH - 1, 0, alarm);
-    }
   },
 };
 

@@ -1,6 +1,14 @@
 import { createFrame, HEIGHT, WIDTH } from "@claude-status/matrix";
 import { describe, expect, it } from "vitest";
-import { ANTICS, anticNamed, anticWeight, drawGauge, SIGNALS, STATUS_SCENE } from "./scenes";
+import {
+  ANTICS,
+  anticNamed,
+  anticWeight,
+  drawAlarm,
+  drawGauge,
+  SIGNALS,
+  STATUS_SCENE,
+} from "./scenes";
 import { deriveMood, type PetState, STATUSES } from "./state";
 
 const stateAt = (fill: number, status: PetState["status"] = "thinking"): PetState => ({
@@ -128,13 +136,13 @@ describe("STATUS_SCENE", () => {
   });
 });
 
-describe("the waiting dot", () => {
+describe("drawAlarm", () => {
   const cornerOver = (waiting: number) => {
     // Sampled across a blink so the "on" half is always caught.
     const seen: string[] = [];
     for (let step = 0; step < 20; step++) {
       const frame = createFrame();
-      STATUS_SCENE.paint(frame, step * 0.03, { ...stateAt(0.2, "working"), waiting });
+      drawAlarm(frame, waiting, step * 0.03);
 
       const [r, g, b] = frame.get(WIDTH - 1, 0);
       if (r || g || b) seen.push(`${r},${g},${b}`);
@@ -170,6 +178,13 @@ describe("the waiting dot", () => {
 
   it("caps at red however many are waiting", () => {
     expect(cornerOver(3)[0]).toBe(cornerOver(9)[0]);
+  });
+
+  it("is no part of the status scene, so an antic cannot hide it", () => {
+    const frame = createFrame();
+    STATUS_SCENE.paint(frame, 0, { ...stateAt(0.2, "working"), waiting: 3 });
+
+    expect(frame.get(WIDTH - 1, 0)).toEqual([0, 0, 0]);
   });
 });
 

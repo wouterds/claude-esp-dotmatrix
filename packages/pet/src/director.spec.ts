@@ -58,24 +58,52 @@ describe("createDirector", () => {
     expect(spent.playing()).toBe("status");
   });
 
-  it("never interrupts an error or a prompt waiting on the user", () => {
-    for (const status of ["error", "waiting"] as const) {
-      const pet = director(1);
+  it("never interrupts an error - a red flashing face is the message", () => {
+    const pet = director(1);
 
-      for (const t of [0, 1, 2, 5, 20, 100]) {
-        pet.paint(createFrame(), t, state(status));
-        expect(pet.playing(), `${status} at ${t}`).toBe("status");
-      }
+    for (const t of [0, 1, 2, 5, 20, 100]) {
+      pet.paint(createFrame(), t, state("error"));
+      expect(pet.playing(), `error at ${t}`).toBe("status");
     }
+  });
+
+  it("does keep playing up while a session is waiting", () => {
+    // Claude Code raises a notification after a minute idle, so waiting is the
+    // ordinary state of a pet sat on a desk. Suppressing antics through it left
+    // the panel still exactly when there was most reason for it not to be.
+    const pet = director(10);
+
+    pet.paint(createFrame(), 0, state("waiting"));
+    pet.paint(createFrame(), 3.1, state("waiting"));
+
+    expect(pet.playing()).not.toBe("status");
+  });
+
+  it("keeps the waiting dot lit through an antic", () => {
+    const pet = director(10);
+    const waiting = { ...state("working"), waiting: 2 };
+
+    pet.paint(createFrame(), 0, waiting);
+
+    // Across a blink, during an antic, the corner still lights.
+    const lit = Array.from({ length: 20 }, (_, step) => {
+      const frame = createFrame();
+      pet.paint(frame, 3.1 + step * 0.03, waiting);
+
+      return frame.get(7, 0).some((v) => v > 0);
+    });
+
+    expect(pet.playing()).not.toBe("status");
+    expect(lit.some(Boolean)).toBe(true);
   });
 
   it("drops whatever is playing the moment something needs acting on", () => {
     const pet = director(10);
     pet.paint(createFrame(), 0, state());
-    pet.paint(createFrame(), 5.1, state());
+    pet.paint(createFrame(), 3.1, state());
     expect(pet.playing()).not.toBe("status");
 
-    pet.paint(createFrame(), 5.2, state("error"));
+    pet.paint(createFrame(), 3.2, state("error"));
     expect(pet.playing()).toBe("status");
   });
 

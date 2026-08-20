@@ -64,6 +64,22 @@ kinds of claim get different clocks:
 `SessionEnd` deletes the file rather than setting idle. Left behind, a closed
 session stays a candidate and competes with live ones as the quietest of them.
 
+## The antics run on their own
+
+The daemon interjects one every 24 seconds or so with a fresh window, stretching
+to two minutes with a spent one. Nothing has to ask for it.
+
+**Only `error` suppresses them.** A red flashing face is the message and an antic
+replaces the face. `waiting` used to suppress them too, and that was a bug rather
+than a policy: Claude Code raises a notification once a session has been idle a
+minute, so sitting at the desk doing nothing set the status to waiting and stopped
+the antics altogether - the panel went still exactly when there was most reason
+for it not to be.
+
+That suppression existed because the corner dot was painted *inside* the status
+scene, so an antic hid it for its whole run. The dot is an overlay now, painted
+over whatever is playing, which is what made letting them run safe.
+
 ## One dot for the chats that want you
 
 Top right, blinking three times a second - fast, because it is the only thing on

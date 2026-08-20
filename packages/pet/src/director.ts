@@ -1,5 +1,13 @@
 import type { Frame } from "@claude-status/matrix";
-import { ANTICS, anticNamed, anticWeight, fatigueOf, type Scene, STATUS_SCENE } from "./scenes";
+import {
+  ANTICS,
+  anticNamed,
+  anticWeight,
+  drawAlarm,
+  fatigueOf,
+  type Scene,
+  STATUS_SCENE,
+} from "./scenes";
 import type { PetState, Status } from "./state";
 
 /** Average seconds between spontaneous antics, with room left in the window. */
@@ -10,10 +18,15 @@ const DEFAULT_INTERVAL = 40;
 const RESTLESS = 0.6;
 const SLUGGISH = 3;
 
-// Two statuses the pet does not talk over. An error and a prompt waiting on the
-// user are the only things on here that need acting on, and a dance covering
-// either of them is the difference between a pet and a distraction.
-const NO_INTERRUPTIONS: readonly Status[] = ["error", "waiting"];
+// The one status the pet does not talk over: a red flashing face *is* the
+// message, and an antic replaces the face.
+//
+// Waiting used to be in here too, and that was a bug rather than a policy. Claude
+// Code raises a notification once a session has been idle a minute, so sitting at
+// the desk doing nothing set the status to waiting and stopped the antics
+// altogether - the panel went still exactly when there was most reason for it not
+// to. The corner dot is an overlay now, so nothing is hidden by letting them run.
+const NO_INTERRUPTIONS: readonly Status[] = ["error"];
 
 // Punctuation on arriving at a status, rather than something to wait 40 seconds
 // for. Finishing is worth a tick the moment it happens.
@@ -93,6 +106,10 @@ export const createDirector = ({
     const elapsed = active ? now - active.startedAt : now;
 
     scene.paint(frame, elapsed, state, active?.seed ?? 0);
+
+    // Over the top of whatever just painted, and on the wall clock rather than the
+    // scene's, so it blinks at one rate throughout.
+    drawAlarm(frame, state.waiting, now);
   };
 
   const play: Director["play"] = (name, now) => {
