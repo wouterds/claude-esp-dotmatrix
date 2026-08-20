@@ -550,7 +550,7 @@ export const ANTICS: readonly Scene[] = [
     },
   },
 
-  { ...glyphScene("heart", HEART, PINK, 1.8), weight: 4, spentWeight: 1 },
+  { ...glyphScene("heart", HEART, PINK, 1.8), weight: 2, spentWeight: 0.5 },
   { ...glyphScene("burst", BURST, STATUS_COLORS.idle, 1.8), spentWeight: 0 },
   { ...glyphScene("bolt", BOLT, STATUS_COLORS.waiting, 1.4), spentWeight: 0 },
   { ...glyphScene("sparkle", SPARKLE, STATUS_COLORS.thinking, 1.6), spentWeight: 0.5 },
@@ -558,7 +558,7 @@ export const ANTICS: readonly Scene[] = [
   { ...glyphScene("invader", INVADER, STATUS_COLORS.done, 1.8), spentWeight: 0 },
   {
     name: "ghost",
-    duration: 1.8,
+    duration: 3,
     weight: 3,
     spentWeight: 0.5,
     // Turning to face the other way partway through its run, so it drifts rather

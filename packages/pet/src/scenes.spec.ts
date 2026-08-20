@@ -595,15 +595,16 @@ describe("anticWeight", () => {
     expect(found).toBe(false);
   });
 
-  it("makes hearts the likeliest while there is room", () => {
-    // given
+  it("makes the ghost the likeliest while there is room", () => {
+    // given - the heart held this spot and was dialled back for coming round too
+    // often. Which one leads matters less than that it is not a grim one.
     const fresh = 0;
 
     // when
     const likeliest = commonest(fresh);
 
     // then
-    expect(likeliest).toBe("heart");
+    expect(likeliest).toBe("ghost");
   });
 
   it("hands the pool over to the grim ones as the window empties", () => {
