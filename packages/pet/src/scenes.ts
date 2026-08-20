@@ -1,4 +1,4 @@
-import { type Color, type Frame, HEIGHT, hsv, lerp, scale, WIDTH } from "@claude-status/matrix";
+import { type Color, type Frame, HEIGHT, hsv, scale, WIDTH } from "@claude-status/matrix";
 import { drawFace } from "./faces";
 import { BOLT, BURST, CHECK, CROSS, drawGlyph, HEART, SPARKLE } from "./glyphs";
 import { GAUGE_BANDS, PINK, STATUS_COLORS, WHITE, WINDOW_COLOR } from "./palette";
