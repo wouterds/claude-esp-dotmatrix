@@ -8,10 +8,10 @@ export const FRAME_BYTES = LED_COUNT * 3;
 // than about the supply - above it a dark room gets a nightlight.
 export const MAX_BRIGHTNESS = 96;
 
-// Low, because this sits an arm's length away in a lit room rather than across
-// one. 48 was measured as "I'm blind" on a desk; single digits are the working
-// range and the ceiling is there for a bright room, not for normal use.
-export const DEFAULT_BRIGHTNESS = 6;
+// Low, because this sits an arm's length away rather than across a room. 48 was
+// reported as "I'm blind" at that distance and 10 as comfortable, so the working
+// range is around ten and the ceiling is for a bright room, not for normal use.
+export const DEFAULT_BRIGHTNESS = 10;
 
 const MAGIC_0 = 0xc1;
 const MAGIC_1 = 0xa0;

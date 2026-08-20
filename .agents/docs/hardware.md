@@ -72,8 +72,8 @@ that it is colour and not geometry is a colour appearing that was never sent.
 
 ## Brightness
 
-The working range is **single digits**. 48 is genuinely blinding at desk
-distance, and the ceiling of 96 exists for a bright room rather than for use.
+Around **10**. 48 is genuinely blinding at desk distance and 10 is comfortable,
+so the ceiling of 96 exists for a bright room rather than for use.
 
 ## Power
 
