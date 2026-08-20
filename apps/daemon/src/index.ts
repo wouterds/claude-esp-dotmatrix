@@ -1,5 +1,6 @@
 import { createFrame, hex, type Matrix, openMatrix, type Rotation } from "@claude-status/matrix";
 import {
+  CONTEXT_LIMIT,
   createDirector,
   DEFAULT_DESIRE,
   type Desire,
@@ -8,6 +9,7 @@ import {
   type PetState,
   readDesire,
   readUsage,
+  type Usage,
 } from "@claude-status/pet";
 import { claim, release } from "./lock";
 
@@ -29,7 +31,7 @@ const director = createDirector({
 let matrix: Matrix | null = null;
 let connecting = false;
 let desire: Desire = DEFAULT_DESIRE;
-let usage = { tokens: 0, fill: 0 };
+let usage: Usage = { tokens: 0, fill: 0, limit: CONTEXT_LIMIT };
 let anticAt: number | null = null;
 let applied: { brightness: number; rotation: Rotation } | null = null;
 

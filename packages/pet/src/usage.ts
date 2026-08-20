@@ -2,9 +2,24 @@ import { open, readdir, stat } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
 
-// Claude Code's own default. A session on a wider window reports a fill that
-// reads low rather than wrong, which is the safer way round for a gauge.
-export const CONTEXT_LIMIT = 200_000;
+// The windows a session might be running on, narrowest first. Which one is in
+// use is not written into a transcript, and hard coding the narrowest pinned the
+// gauge at full and the mood at "dead" for the rest of any session that outgrew
+// it - which is every long one.
+//
+// So it is inferred: the narrowest window the reading still fits in. A wide
+// session reads low early and corrects itself as it fills, which is the right
+// way round - a gauge that overstates is one nobody looks at twice.
+const WINDOWS = [200_000, 1_000_000] as const;
+
+export const CONTEXT_LIMIT = WINDOWS[0];
+
+export const limitFor = (tokens: number): number => {
+  const configured = Number(process.env.CLAUDE_STATUS_CONTEXT);
+  if (Number.isFinite(configured) && configured > 0) return configured;
+
+  return WINDOWS.find((window) => tokens <= window) ?? WINDOWS[WINDOWS.length - 1];
+};
 
 // A transcript grows to megabytes over a long session and the answer is always
 // in the last few entries, so only the tail is read. Enough for a handful of
@@ -16,6 +31,7 @@ const TRANSCRIPTS = join(homedir(), ".claude", "projects");
 export type Usage = {
   tokens: number;
   fill: number;
+  limit: number;
 };
 
 type UsageFields = {
@@ -34,10 +50,7 @@ const contextOf = (usage: UsageFields) =>
   (usage.cache_read_input_tokens ?? 0) +
   (usage.output_tokens ?? 0);
 
-export const readUsage = async (
-  transcriptPath: string,
-  limit = CONTEXT_LIMIT,
-): Promise<Usage | null> => {
+export const readUsage = async (transcriptPath: string, limit?: number): Promise<Usage | null> => {
   const handle = await open(transcriptPath, "r").catch(() => null);
   if (!handle) return null;
 
@@ -60,8 +73,9 @@ export const readUsage = async (
         if (!usage) continue;
 
         const tokens = contextOf(usage);
+        const window = limit ?? limitFor(tokens);
 
-        return { tokens, fill: Math.min(1, tokens / limit) };
+        return { tokens, fill: Math.min(1, tokens / window), limit: window };
       } catch {
         // A truncated first line is expected - the tail starts mid-entry.
       }
