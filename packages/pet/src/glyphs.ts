@@ -70,13 +70,15 @@ export const BURST: Glyph = [
   "#..##..#",
 ];
 
+// Shifted a column right of where it was drawn: the strike runs bottom-left to
+// top-right, so at x=0 to 6 it hangs off the left of the panel.
 export const BOLT: Glyph = [
+  ".....##.",
+  "....##..",
+  "...##...",
+  "..#####.",
   "....##..",
   "...##...",
   "..##....",
-  ".#####..",
-  "...##...",
-  "..##....",
-  ".##.....",
-  "#.......",
+  ".#......",
 ];
