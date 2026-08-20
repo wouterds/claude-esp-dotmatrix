@@ -34,17 +34,26 @@ const litInRow = (frame: ReturnType<typeof createFrame>, y: number) => {
   return lit;
 };
 
+const litEverywhere = (frame: ReturnType<typeof createFrame>) =>
+  Array.from({ length: HEIGHT }, (_, y) => litInRow(frame, y).length).reduce(
+    (total, count) => total + count,
+    0,
+  );
+
 // An accent moves, so one moment proves nothing about the row it crosses.
 const MOMENTS = [0, 0.17, 0.4, 0.63, 0.9, 1.3, 2.1, 3.4, 5.5, 7.9, 11.3];
 
 describe("drawBar", () => {
-  // Dark means "nothing has reported this", and only that. An empty quota is a
-  // fact worth showing, so it gets the smallest bar there is rather than the
-  // same blank row as no reading at all.
   it("still lights one pixel on an untouched quota, and it is green", () => {
+    // given - dark means "nothing has reported this", and only that. An empty
+    // quota is a fact worth showing, so it gets the smallest bar there is rather
+    // than the same blank row as no reading at all.
     const frame = createFrame();
+
+    // when
     drawBar(frame, FIVE_HOUR_ROW, 0);
 
+    // then
     expect(litInRow(frame, FIVE_HOUR_ROW)).toEqual([0]);
 
     const [red, green] = frame.get(0, FIVE_HOUR_ROW);
@@ -52,7 +61,11 @@ describe("drawBar", () => {
   });
 
   it("never drops below that one pixel, however small the figure", () => {
-    for (const used of [0, 0.0001, 0.01, 0.05, 0.124]) {
+    // given
+    const slivers = [0, 0.0001, 0.01, 0.05, 0.124];
+
+    // when / then - the sweep is the action, so it carries its own assertion
+    for (const used of slivers) {
       const frame = createFrame();
       drawBar(frame, FIVE_HOUR_ROW, used);
 
@@ -61,61 +74,82 @@ describe("drawBar", () => {
   });
 
   it("fills the row at the top of the quota", () => {
+    // given
     const frame = createFrame();
+
+    // when
     drawBar(frame, FIVE_HOUR_ROW, 1);
 
+    // then
     expect(litInRow(frame, FIVE_HOUR_ROW).length).toBe(WIDTH);
   });
 
   it("lights half the row at half spent", () => {
+    // given
     const frame = createFrame();
+
+    // when
     drawBar(frame, FIVE_HOUR_ROW, 0.5);
 
+    // then
     expect(litInRow(frame, FIVE_HOUR_ROW)).toEqual([0, 1, 2, 3]);
   });
 
-  // Measured on the second pixel rather than the first, because the first is
-  // held at a whole pixel by the floor above and so has nothing left to dim.
   it("dims the leading pixel by the fraction of it in use", () => {
+    // given - measured on the second pixel rather than the first, because the
+    // first is held at a whole pixel by the floor and has nothing left to dim.
     const half = createFrame();
     const full = createFrame();
+
+    // when
     drawBar(half, FIVE_HOUR_ROW, 0.1875);
     drawBar(full, FIVE_HOUR_ROW, 0.25);
 
+    // then
     expect(half.get(1, FIVE_HOUR_ROW)[1]).toBeLessThan(full.get(1, FIVE_HOUR_ROW)[1]);
   });
 
   it("stays green through the first half and reddens after three quarters", () => {
+    // given
     const early = createFrame();
     const late = createFrame();
+
+    // when
     drawBar(early, FIVE_HOUR_ROW, 0.4);
     drawBar(late, FIVE_HOUR_ROW, 1);
 
+    // then
     const [earlyRed, earlyGreen] = early.get(0, FIVE_HOUR_ROW);
     const [lateRed, lateGreen] = late.get(0, FIVE_HOUR_ROW);
-
     expect(earlyGreen).toBeGreaterThan(earlyRed);
     expect(lateRed).toBeGreaterThan(lateGreen);
   });
 
   it("touches only the row it was given", () => {
+    // given
     const frame = createFrame();
+
+    // when
     drawBar(frame, WEEKLY_ROW, 1);
 
+    // then
     for (let y = WEEKLY_ROW + 1; y < HEIGHT; y++) {
       expect(litInRow(frame, y), `row ${y}`).toEqual([]);
     }
   });
 
-  // Position is the only thing telling the two rows apart, so the same figure
-  // has to look identical on either - a difference here would read as a
-  // different number rather than as a different window.
   it("draws the same pixels on either row for the same figure", () => {
+    // given - position is the only thing telling the two rows apart, so the same
+    // figure has to look identical on either. A difference would read as a
+    // different number rather than as a different window.
     const top = createFrame();
     const bottom = createFrame();
+
+    // when
     drawBar(top, WEEKLY_ROW, 0.62);
     drawBar(bottom, FIVE_HOUR_ROW, 0.62);
 
+    // then
     for (let x = 0; x < WIDTH; x++) {
       expect(top.get(x, WEEKLY_ROW), `column ${x}`).toEqual(bottom.get(x, FIVE_HOUR_ROW));
     }
@@ -124,33 +158,41 @@ describe("drawBar", () => {
 
 describe("drawGauges", () => {
   it("puts the week on top and the five hour window on the bottom", () => {
+    // given
     const frame = createFrame();
+
+    // when
     drawGauges(frame, { ...stateAt(0), fiveHour: 0.25, sevenDay: 0.75 });
 
+    // then
     expect(litInRow(frame, FIVE_HOUR_ROW)).toEqual([0, 1]);
     expect(litInRow(frame, WEEKLY_ROW)).toEqual([0, 1, 2, 3, 4, 5]);
   });
 
-  // A row defaulting to empty would read as "none of it used", which is the one
-  // wrong answer that looks like good news.
   it("leaves a quota nothing has reported dark rather than empty", () => {
+    // given - a row defaulting to empty would read as "none of it used", which is
+    // the one wrong answer that looks like good news.
     const frame = createFrame();
+
+    // when
     drawGauges(frame, { ...stateAt(0.5), fiveHour: null, sevenDay: null });
 
+    // then
     expect(litInRow(frame, FIVE_HOUR_ROW)).toEqual([]);
     expect(litInRow(frame, WEEKLY_ROW)).toEqual([]);
   });
 
-  // The pair that makes a dark row unambiguous: nothing reported draws nothing,
-  // reported-and-empty draws the one pixel. Without the second, a fresh window
-  // and a broken statusline are the same picture.
   it("tells an empty quota apart from an unknown one", () => {
+    // given - the pair that makes a dark row unambiguous. Without the floor, a
+    // fresh window and a broken statusline are the same picture.
     const empty = createFrame();
-    drawGauges(empty, { ...stateAt(0.5), fiveHour: 0, sevenDay: 0 });
-
     const unknown = createFrame();
+
+    // when
+    drawGauges(empty, { ...stateAt(0.5), fiveHour: 0, sevenDay: 0 });
     drawGauges(unknown, { ...stateAt(0.5), fiveHour: null, sevenDay: null });
 
+    // then
     expect(litInRow(empty, FIVE_HOUR_ROW)).toEqual([0]);
     expect(litInRow(empty, WEEKLY_ROW)).toEqual([0]);
     expect(litInRow(unknown, FIVE_HOUR_ROW)).toEqual([]);
@@ -158,20 +200,27 @@ describe("drawGauges", () => {
   });
 
   it("draws the one it knows when the other is missing", () => {
+    // given
     const frame = createFrame();
+
+    // when
     drawGauges(frame, { ...stateAt(0), fiveHour: 0.5, sevenDay: null });
 
+    // then
     expect(litInRow(frame, FIVE_HOUR_ROW)).toEqual([0, 1, 2, 3]);
     expect(litInRow(frame, WEEKLY_ROW)).toEqual([]);
   });
 
-  // The face reddens and slows on the context window, which is per session; the
-  // two bars are account-wide. Crossing them would put one chat's fill on a row
-  // that is meant to be the same number in every chat.
   it("takes no notice of the context fill the face runs on", () => {
+    // given - the face reddens and slows on the context window, which is per
+    // session; the two bars are account-wide. Crossing them would put one chat's
+    // fill on a row meant to be the same number in every chat.
     const frame = createFrame();
+
+    // when
     drawGauges(frame, { ...stateAt(1), fiveHour: 0.125, sevenDay: 0.125 });
 
+    // then
     expect(litInRow(frame, FIVE_HOUR_ROW)).toEqual([0]);
     expect(litInRow(frame, WEEKLY_ROW)).toEqual([0]);
   });
@@ -179,63 +228,71 @@ describe("drawGauges", () => {
 
 describe("STATUS_SCENE", () => {
   it("never lets an accent shorten either bar, in any status at any moment", () => {
-    // The spinner crosses the whole edge, both number rows included, on purpose -
-    // so the guarantee is not that they are left alone but that they only ever
-    // get brighter. A bar something could eat into would read as a smaller
+    // given - the spinner crosses the whole edge, both number rows included, on
+    // purpose. The guarantee is not that they are left alone but that they only
+    // ever get brighter: a bar something could eat into would read as a smaller
     // number, and these two rows are the only things here that have to be true.
-    for (const row of [WEEKLY_ROW, FIVE_HOUR_ROW]) {
-      for (const status of STATUSES) {
-        for (const t of MOMENTS) {
-          const alone = createFrame();
-          drawBar(alone, row, 0.5);
+    const cases = [WEEKLY_ROW, FIVE_HOUR_ROW].flatMap((row) =>
+      STATUSES.flatMap((status) => MOMENTS.map((t) => ({ row, status, t }))),
+    );
 
-          const together = createFrame();
-          STATUS_SCENE.paint(together, t, stateAt(0.5, status));
+    // when / then - the sweep is the action, so it carries its own assertion
+    for (const { row, status, t } of cases) {
+      const alone = createFrame();
+      drawBar(alone, row, 0.5);
 
-          expect(
-            litInRow(together, row).length,
-            `row ${row}, ${status} at ${t}`,
-          ).toBeGreaterThanOrEqual(litInRow(alone, row).length);
-        }
-      }
+      const together = createFrame();
+      STATUS_SCENE.paint(together, t, stateAt(0.5, status));
+
+      expect(
+        litInRow(together, row).length,
+        `row ${row}, ${status} at ${t}`,
+      ).toBeGreaterThanOrEqual(litInRow(alone, row).length);
     }
   });
 
-  // On a status with no accent of its own, so this is the bars alone. The
-  // statuses that do have one cross the edge deliberately, and what holds for
-  // those is the "never shorten" guarantee above rather than an exact length.
   it("shows both quotas alongside the face", () => {
+    // given - a status with no accent of its own, so this is the bars alone. The
+    // statuses that do have one cross the edge deliberately, and what holds for
+    // those is the "never shorten" guarantee above rather than an exact length.
     const frame = createFrame();
+
+    // when
     STATUS_SCENE.paint(frame, 0.5, { ...stateAt(0.2, "done"), fiveHour: 0.75, sevenDay: 0.5 });
 
+    // then
     expect(litInRow(frame, FIVE_HOUR_ROW)).toEqual([0, 1, 2, 3, 4, 5]);
     expect(litInRow(frame, WEEKLY_ROW)).toEqual([0, 1, 2, 3]);
   });
 
   it("lights something in every status - a dark panel reads as unplugged", () => {
-    for (const status of STATUSES) {
-      for (const t of MOMENTS) {
-        const frame = createFrame();
-        STATUS_SCENE.paint(frame, t, stateAt(0.3, status));
+    // given
+    const cases = STATUSES.flatMap((status) => MOMENTS.map((t) => ({ status, t })));
 
-        const anything = Array.from({ length: HEIGHT }, (_, y) => litInRow(frame, y).length);
+    // when / then - the sweep is the action, so it carries its own assertion
+    for (const { status, t } of cases) {
+      const frame = createFrame();
+      STATUS_SCENE.paint(frame, t, stateAt(0.3, status));
 
-        expect(
-          anything.reduce((total, count) => total + count, 0),
-          `${status} at ${t}`,
-        ).toBeGreaterThan(0);
-      }
+      expect(litEverywhere(frame), `${status} at ${t}`).toBeGreaterThan(0);
     }
   });
 
   it("runs until replaced rather than expiring", () => {
-    expect(STATUS_SCENE.duration).toBeNull();
+    // given
+    const scene = STATUS_SCENE;
+
+    // when
+    const { duration } = scene;
+
+    // then
+    expect(duration).toBeNull();
   });
 });
 
 describe("drawAlarm", () => {
+  // Sampled across a blink so the "on" half is always caught.
   const cornerOver = (waiting: number) => {
-    // Sampled across a blink so the "on" half is always caught.
     const seen: string[] = [];
     for (let step = 0; step < 20; step++) {
       const frame = createFrame();
@@ -249,99 +306,153 @@ describe("drawAlarm", () => {
   };
 
   it("stays dark when nothing is waiting", () => {
-    expect(cornerOver(0)).toEqual([]);
+    // given
+    const nothingWaiting = 0;
+
+    // when
+    const seen = cornerOver(nothingWaiting);
+
+    // then
+    expect(seen).toEqual([]);
   });
 
   it("lights for one chat, and blinks rather than holding", () => {
-    const seen = cornerOver(1);
+    // given
+    const oneWaiting = 1;
 
+    // when
+    const seen = cornerOver(oneWaiting);
+
+    // then
     expect(seen.length).toBeGreaterThan(0);
     expect(seen.length).toBeLessThan(20);
   });
 
   it("escalates yellow, orange, red as chats pile up", () => {
-    const [one] = cornerOver(1);
-    const [two] = cornerOver(2);
-    const [many] = cornerOver(4);
+    // given
+    const pilingUp = [1, 2, 4];
 
-    expect(new Set([one, two, many]).size).toBe(3);
+    // when
+    const [one, two, many] = pilingUp.map((waiting) => cornerOver(waiting)[0]);
 
-    // Reddening: less green each step, which is what makes it read as escalation
-    // rather than as three arbitrary colours.
+    // then - reddening: less green each step, which is what makes it read as
+    // escalation rather than as three arbitrary colours.
     const green = (colour: string) => Number(colour.split(",")[1]);
+    expect(new Set([one, two, many]).size).toBe(3);
     expect(green(two)).toBeLessThan(green(one));
     expect(green(many)).toBeLessThan(green(two));
   });
 
   it("caps at red however many are waiting", () => {
-    expect(cornerOver(3)[0]).toBe(cornerOver(9)[0]);
+    // given
+    const atTheCap = [3, 9];
+
+    // when
+    const [three, nine] = atTheCap.map((waiting) => cornerOver(waiting)[0]);
+
+    // then
+    expect(nine).toBe(three);
   });
 
   it("is no part of the status scene, so an antic cannot hide it", () => {
+    // given
     const frame = createFrame();
+
+    // when
     STATUS_SCENE.paint(frame, 0, { ...stateAt(0.2, "working"), waiting: 3 });
 
+    // then
     expect(frame.get(WIDTH - 1, 0)).toEqual([0, 0, 0]);
   });
 });
 
 describe("ANTICS", () => {
   it("all end, or the pet would never return to showing status", () => {
-    for (const antic of [...ANTICS, ...SIGNALS]) {
-      expect(antic.duration, antic.name).toBeGreaterThan(0);
-      expect(antic.duration, antic.name).toBeLessThan(10);
+    // given
+    const every = [...ANTICS, ...SIGNALS];
+
+    // when
+    const durations = every.map((antic) => ({ name: antic.name, duration: antic.duration }));
+
+    // then
+    for (const { name, duration } of durations) {
+      expect(duration, name).toBeGreaterThan(0);
+      expect(duration, name).toBeLessThan(10);
     }
   });
 
   it("all light something across their run", () => {
-    for (const antic of [...ANTICS, ...SIGNALS]) {
-      for (const fraction of [0.05, 0.35, 0.7]) {
-        const frame = createFrame();
-        antic.paint(frame, antic.duration! * fraction, stateAt(0.4, "idle"));
+    // given
+    const every = [...ANTICS, ...SIGNALS];
+    const cases = every.flatMap((antic) =>
+      [0.05, 0.35, 0.7].map((fraction) => ({ antic, fraction })),
+    );
 
-        const total = Array.from({ length: HEIGHT }, (_, y) => litInRow(frame, y).length).reduce(
-          (sum, count) => sum + count,
-          0,
-        );
+    // when / then - the sweep is the action, so it carries its own assertion
+    for (const { antic, fraction } of cases) {
+      const frame = createFrame();
+      antic.paint(frame, antic.duration! * fraction, stateAt(0.4, "idle"));
 
-        expect(total, `${antic.name} at ${fraction}`).toBeGreaterThan(0);
-      }
+      expect(litEverywhere(frame), `${antic.name} at ${fraction}`).toBeGreaterThan(0);
     }
   });
 
   it("have distinct names, since that is how one is asked for", () => {
-    const names = [...ANTICS, ...SIGNALS].map((scene) => scene.name);
+    // given
+    const every = [...ANTICS, ...SIGNALS];
 
+    // when
+    const names = every.map((scene) => scene.name);
+
+    // then
     expect(new Set(names).size).toBe(names.length);
   });
 
   it("keep signals out of the random pool, so a sweep always means something", () => {
+    // given
     const pool = ANTICS.map((antic) => antic.name);
 
-    for (const signal of SIGNALS) {
-      expect(pool, signal.name).not.toContain(signal.name);
-    }
+    // when
+    const leaked = SIGNALS.filter((signal) => pool.includes(signal.name));
+
+    // then
+    expect(leaked.map((signal) => signal.name)).toEqual([]);
   });
 
   it("still let a signal be asked for by name", () => {
-    expect(anticNamed("switch")?.name).toBe("switch");
+    // given
+    const signal = "switch";
+
+    // when
+    const found = anticNamed(signal);
+
+    // then
+    expect(found?.name).toBe("switch");
   });
 
   it("paint the same pixels for the same moment, twinkle included", () => {
+    // given
     const once = createFrame();
     const again = createFrame();
+
+    // when
     anticNamed("twinkle")?.paint(once, 1.1, stateAt(0.4));
     anticNamed("twinkle")?.paint(again, 1.1, stateAt(0.4));
 
+    // then
     expect(once.toBytes()).toEqual(again.toBytes());
   });
 
   it("move on - twinkle at a later step is a different sky", () => {
+    // given
     const early = createFrame();
     const later = createFrame();
+
+    // when
     anticNamed("twinkle")?.paint(early, 0.1, stateAt(0.4));
     anticNamed("twinkle")?.paint(later, 1.9, stateAt(0.4));
 
+    // then
     expect(early.toBytes()).not.toEqual(later.toBytes());
   });
 });
@@ -355,28 +466,52 @@ describe("anticWeight", () => {
     return anticWeight(named(name), fatigue) / total;
   };
 
-  it("drains the energetic scenes out of the pool as the window fills", () => {
-    for (const name of ["dance", "spin", "wave", "rainbow", "bolt", "burst"]) {
-      expect(anticWeight(named(name), 0), name).toBeGreaterThan(0);
-      expect(anticWeight(named(name), 1), name).toBe(0);
-    }
-  });
-
   const commonest = (fatigue: number) =>
     [...ANTICS].sort((a, b) => anticWeight(b, fatigue) - anticWeight(a, fatigue))[0].name;
 
-  // Asserted against each other rather than as percentages. A share depends on
-  // how many antics exist, so adding one used to break these; which one is
-  // likeliest is the actual intent.
+  it("drains the energetic scenes out of the pool as the window fills", () => {
+    // given
+    const energetic = ["dance", "spin", "wave", "rainbow", "bolt", "burst"];
+
+    // when
+    const weights = energetic.map((name) => ({
+      name,
+      fresh: anticWeight(named(name), 0),
+      spent: anticWeight(named(name), 1),
+    }));
+
+    // then
+    for (const { name, fresh, spent } of weights) {
+      expect(fresh, name).toBeGreaterThan(0);
+      expect(spent, name).toBe(0);
+    }
+  });
+
   it("makes the cross the likeliest single antic once there is no room left", () => {
-    expect(commonest(1)).toBe("cross");
+    // given - asserted against the other antics rather than as a percentage. A
+    // share depends on how many antics exist, so adding one used to break these.
+    const spent = 1;
+
+    // when
+    const likeliest = commonest(spent);
+
+    // then
+    expect(likeliest).toBe("cross");
   });
 
   it("makes hearts the likeliest while there is room", () => {
-    expect(commonest(0)).toBe("heart");
+    // given
+    const fresh = 0;
+
+    // when
+    const likeliest = commonest(fresh);
+
+    // then
+    expect(likeliest).toBe("heart");
   });
 
   it("hands the pool over to the grim ones as the window empties", () => {
+    // given
     const grim = ["cross", "skull", "zzz"];
     const shareOfGrim = (fatigue: number) => {
       const total = ANTICS.reduce((sum, antic) => sum + anticWeight(antic, fatigue), 0);
@@ -389,28 +524,49 @@ describe("anticWeight", () => {
       );
     };
 
-    expect(shareOfGrim(0)).toBeLessThan(0.1);
-    expect(shareOfGrim(1)).toBeGreaterThan(0.5);
+    // when
+    const [whenFresh, whenSpent] = [shareOfGrim(0), shareOfGrim(1)];
+
+    // then
+    expect(whenFresh).toBeLessThan(0.1);
+    expect(whenSpent).toBeGreaterThan(0.5);
   });
 
   it("keeps hearts commoner with room than without", () => {
-    expect(shareOf("heart", 1)).toBeLessThan(shareOf("heart", 0));
+    // given
+    const heart = "heart";
+
+    // when
+    const [whenSpent, whenFresh] = [shareOf(heart, 1), shareOf(heart, 0)];
+
+    // then
+    expect(whenSpent).toBeLessThan(whenFresh);
   });
 
   it("never goes negative, whatever the fatigue", () => {
-    for (const fatigue of [0, 0.25, 0.5, 0.75, 1]) {
-      for (const antic of ANTICS) {
-        expect(anticWeight(antic, fatigue), `${antic.name} at ${fatigue}`).toBeGreaterThanOrEqual(
-          0,
-        );
-      }
+    // given
+    const cases = [0, 0.25, 0.5, 0.75, 1].flatMap((fatigue) =>
+      ANTICS.map((antic) => ({ antic, fatigue })),
+    );
+
+    // when / then - the sweep is the action, so it carries its own assertion
+    for (const { antic, fatigue } of cases) {
+      expect(anticWeight(antic, fatigue), `${antic.name} at ${fatigue}`).toBeGreaterThanOrEqual(0);
     }
   });
 
   it("always leaves something to pick", () => {
-    for (const fatigue of [0, 0.5, 1]) {
-      const total = ANTICS.reduce((sum, antic) => sum + anticWeight(antic, fatigue), 0);
+    // given
+    const fatigues = [0, 0.5, 1];
 
+    // when
+    const totals = fatigues.map((fatigue) => ({
+      fatigue,
+      total: ANTICS.reduce((sum, antic) => sum + anticWeight(antic, fatigue), 0),
+    }));
+
+    // then
+    for (const { fatigue, total } of totals) {
       expect(total, `fatigue ${fatigue}`).toBeGreaterThan(0);
     }
   });
@@ -418,7 +574,14 @@ describe("anticWeight", () => {
 
 describe("anticNamed", () => {
   it("finds one by name and returns null for anything else", () => {
-    expect(anticNamed("heart")?.name).toBe("heart");
-    expect(anticNamed("floss")).toBeNull();
+    // given
+    const names = ["heart", "floss"];
+
+    // when
+    const [known, unknown] = names.map(anticNamed);
+
+    // then
+    expect(known?.name).toBe("heart");
+    expect(unknown).toBeNull();
   });
 });

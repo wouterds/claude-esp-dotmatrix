@@ -20,33 +20,65 @@ const checksumOf = (packet: Uint8Array) => {
 
 describe("encodeFrame", () => {
   it("wraps the pixels in magic, command, length and checksum", () => {
+    // given
     const pixels = new Uint8Array(FRAME_BYTES).fill(7);
+
+    // when
     const packet = encodeFrame(pixels);
 
+    // then
     expect(packet.length).toBe(FRAME_BYTES + 5);
     expect([...packet.slice(0, 4)]).toEqual([0xc1, 0xa0, 0x01, FRAME_BYTES]);
     expect(packet.at(-1)).toBe(checksumOf(packet));
   });
 
   it("rejects a frame that is not exactly one screen", () => {
-    expect(() => encodeFrame(new Uint8Array(FRAME_BYTES - 1))).toThrow(/192 bytes/);
+    // given
+    const short = new Uint8Array(FRAME_BYTES - 1);
+
+    // when
+    const encoding = () => encodeFrame(short);
+
+    // then
+    expect(encoding).toThrow(/192 bytes/);
   });
 });
 
 describe("encodeBrightness", () => {
   it("clamps above the ceiling rather than wrapping the byte", () => {
-    expect(encodeBrightness(9000)[4]).toBe(MAX_BRIGHTNESS);
-    expect(encodeBrightness(-5)[4]).toBe(0);
+    // given
+    const impossible = [9000, -5];
+
+    // when
+    const [over, under] = impossible.map(encodeBrightness);
+
+    // then
+    expect(over[4]).toBe(MAX_BRIGHTNESS);
+    expect(under[4]).toBe(0);
   });
 
   it("rounds a fractional level", () => {
-    expect(encodeBrightness(12.6)[4]).toBe(13);
+    // given
+    const fractional = 12.6;
+
+    // when
+    const packet = encodeBrightness(fractional);
+
+    // then
+    expect(packet[4]).toBe(13);
   });
 });
 
 describe("payload free commands", () => {
   it("declares a zero length and checksums the command alone", () => {
-    for (const packet of [encodePing(), encodeClear()]) {
+    // given
+    const commands = [encodePing, encodeClear];
+
+    // when
+    const packets = commands.map((encode) => encode());
+
+    // then
+    for (const packet of packets) {
       expect(packet.length).toBe(5);
       expect(packet[3]).toBe(0);
       expect(packet.at(-1)).toBe(checksumOf(packet));

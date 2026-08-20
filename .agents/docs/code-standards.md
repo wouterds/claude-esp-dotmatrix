@@ -38,6 +38,27 @@ looks arbitrary until you know what it prevents (why the gauge row is sacred).
 
 ## Testing
 
+Every test is laid out **given / when / then**, in that order and labelled with
+those comments. The setup, the one action under test, and what must be true after
+it. A test with no `// when` is testing nothing, and a test with two of them is
+two tests.
+
+```ts
+it("lights half the row at half spent", () => {
+  // given
+  const frame = createFrame();
+
+  // when
+  drawBar(frame, FIVE_HOUR_ROW, 0.5);
+
+  // then
+  expect(litInRow(frame, FIVE_HOUR_ROW)).toEqual([0, 1, 2, 3]);
+});
+```
+
+Where a case is only meaningful swept across inputs, the loop goes in `// when`
+and the assertion with it - the sweep is the action.
+
 What earns a spec here is **arithmetic and rules** - frame addressing, gamma,
 the gauge, session expiry, which session speaks. Those are the things that go
 wrong silently, because a wrong pixel still renders.
