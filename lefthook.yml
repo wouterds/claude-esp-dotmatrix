@@ -1,0 +1,42 @@
+post-merge:
+  parallel: true
+  commands:
+    dependencies:
+      run: npm install --package-lock-only
+
+post-checkout:
+  parallel: true
+  # A rebase is a checkout per replayed commit, and this rewrites
+  # package-lock.json - so replaying a commit that touches the lock leaves the
+  # tree dirty before the next one applies, and the commit introducing it lands
+  # empty. Git then reports "nothing to commit, working tree clean" while the
+  # change is missing, and continuing drops it. Skipping here beats LEFTHOOK=0
+  # at the call site, which would also disable the pre-commit checks.
+  skip:
+    - rebase
+    - merge
+  commands:
+    dependencies:
+      run: npm install --package-lock-only
+
+pre-commit:
+  parallel: true
+  commands:
+    biome:
+      glob: "*.{ts,tsx,js,jsx,json,css}"
+      run: npx biome check --no-errors-on-unmatched {staged_files}
+    # Whole-repo rather than staged, because a type or a spec breaks from the
+    # other side of an import. Turbo caches both, so an unchanged workspace
+    # costs nothing and only a commit touching typescript pays at all.
+    typecheck:
+      glob: "*.{ts,tsx}"
+      run: npm run typecheck
+    test:
+      glob: "*.{ts,tsx}"
+      run: npm test
+
+commit-msg:
+  parallel: true
+  commands:
+    commitlint:
+      run: npx commitlint --edit
