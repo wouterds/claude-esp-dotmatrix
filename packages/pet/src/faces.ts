@@ -28,30 +28,32 @@ const DEAD_ROW = 1;
 // content, drooping, cross, or done for. Splitting further would mean shapes that
 // differ by one pixel and say nothing.
 const EYES: Record<Mood, Glyph> = {
-  // Full crosses. Wide awake, locked on.
-  // Full crosses. Wide awake.
+  // Up arrows. Read as cute, so they go on the contented states.
+  happy: [".#....#.", "#.#..#.#"],
+  // The same, a row lower - settled rather than perky.
+  zen: ["........", ".#....#.", "#.#..#.#"],
+  // Full crosses for the working states. Focused and excited share them: the
+  // status has its own colour, so the eyes only have to say awake.
+  focused: ["#.#..#.#", ".#....#.", "#.#..#.#"],
   excited: ["#.#..#.#", ".#....#.", "#.#..#.#"],
-  // Sideways arrows, turned in on each other. Concentrating.
+  // A flat lid with the pupil under it - half shut. Not the top half of a cross,
+  // which is a scowl, and not one pixel, which is a fault light.
+  tired: ["###..###", ".#....#."],
+  // Arrows turned in on each other. These read as angry, which is the one place
+  // that is wanted.
   //
   // Inset a column from the edges, unlike the rest: its lit pixels are only the
   // arrow tips, so at x=0 and x=7 a sideways glance clipped one arrow away
   // entirely rather than trimming an edge off it.
-  focused: [".#....#.", "..#..#..", ".#....#."],
-
-  // The bottom half - two carets. Shut, and pleased about it.
-  happy: ["........", ".#....#.", "#.#..#.#"],
-  zen: ["........", ".#....#.", "#.#..#.#"],
-  // Nearly shut: one pixel each. The top half of a cross was the obvious droop and
-  // the wrong one - two v's read as a scowl rather than as fatigue.
-  //
-  // It doubles as the blink, which is what a blink should be anyway: an eye almost
-  // closed, not an eye swapped for a different shape.
-  tired: [".#....#."],
-  // A brow slanting inwards over a cross.
-  annoyed: ["#......#", "#.#..#.#", ".#....#."],
+  annoyed: [".#....#.", "..#..#..", ".#....#."],
   // One cross over the whole face rather than one per eye, and no mouth with it.
   dead: ["#......#", ".#....#.", "..#..#..", "..#..#..", ".#....#.", "#......#"],
 };
+
+// A blink is an eye almost closed, so it gets its own shape rather than borrowing
+// a mood's. Flat lids - a bigger, softer thing than what they replace, so a blink
+// does not read as the face dropping out for a frame.
+const LID: Glyph = ["........", "###..###"];
 
 // Two pixels. Dimmer than the eyes, and that is the whole mouth - the mood lives
 // in the eyes, so anything wider starts competing with them and anything that
@@ -83,7 +85,7 @@ export const drawFace = (
   const row = dead ? DEAD_ROW : FACE_ROW;
   const [dx, dy] = dead ? [0, 0] : gaze;
 
-  drawGlyph(frame, blink ? EYES.tired : EYES[mood], color, dx, row + bob + dy);
+  drawGlyph(frame, blink ? LID : EYES[mood], color, dx, row + bob + dy);
 
   // Drawn after the eyes and never moved, so however far they look the mouth is
   // untouched. They do cross into its two columns, but rows apart from it.
