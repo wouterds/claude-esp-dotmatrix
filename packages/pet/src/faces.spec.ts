@@ -45,8 +45,21 @@ describe("drawFace", () => {
     drawFace(open, "happy", white);
     drawFace(blinked, "happy", white, { blink: true });
 
-    expect(blinked.get(1, 2)).not.toEqual(open.get(1, 2));
-    expect(blinked.get(2, 6)).toEqual(open.get(2, 6));
+    // Row 1 is the top of an open eye and empty on a closed one. Probing lower
+    // proves nothing: a lid is wider than an eye, so the rows they share are lit
+    // either way.
+    expect(blinked.get(1, 1)).not.toEqual(open.get(1, 1));
+    expect(blinked.get(3, 6)).toEqual(open.get(3, 6));
+  });
+
+  it("gives the moods that blush two cheeks and the others none", () => {
+    const blushing = createFrame();
+    const plain = createFrame();
+    drawFace(blushing, "happy", white);
+    drawFace(plain, "focused", white);
+
+    expect(blushing.get(1, 4)).not.toEqual([0, 0, 0]);
+    expect(plain.get(1, 4)).toEqual([0, 0, 0]);
   });
 
   it("a glance moves the eyes sideways and leaves the mouth put", () => {
