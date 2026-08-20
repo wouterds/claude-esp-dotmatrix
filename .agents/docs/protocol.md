@@ -45,6 +45,14 @@ rewrite.
 in its byte and an eye is not, so a fade to a quarter reads as half lit;
 correcting here keeps scene arithmetic in the space a human judges it by.
 
+**Judge a colour by its wire value, not by eye.** Correction squashes the small
+channels hardest, so a source with a little of something loses nearly all of it -
+`#b0392a` reads as a perfectly reasonable dark red on a screen and arrives at the
+LEDs as `rgb(113,9,5)`, pure red with the green gone. Getting a warm orange-red
+out of the panel means putting far more green in than the source appears to want,
+and the source ends up looking almost brown. Two rounds of "that is still bright
+red" went by before anyone checked the number.
+
 ## Row 7 is the gauge
 
 The bottom row is how much context window is left and is never anything else. A
