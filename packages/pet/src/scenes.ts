@@ -79,9 +79,10 @@ export const drawGauge = (frame: Frame, fill: number) => {
  */
 const fatigueOf = (fill: number) => Math.max(0, Math.min(1, (fill - 0.5) / 0.5));
 
-// Most of the way to red at the top end. At 0.6 a blue status only reached a
-// muted rose, which reads as a colour choice rather than as a warning.
-const TINT = 0.85;
+// Partway to red, which lands a blue status on a muted rose rather than an alarm.
+// Judged on the panel: 0.85 was harsher than it needed to be, and the eyes and
+// the gauge are already saying how bad it is.
+const TINT = 0.6;
 const SLOWEST = 0.5;
 
 // Prime-ish periods, so a blink and a glance drift against each other instead

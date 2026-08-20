@@ -80,7 +80,7 @@ three ways at once rather than picking one:
 | | |
 | --- | --- |
 | the eyes | droop to the top half of a cross at 75%, become one full-face cross at 95% |
-| the colour | tinted towards the gauge's red, most of the way there by 100% |
+| the colour | tinted towards the gauge's red - a muted rose by 100%, not an alarm |
 | the pace | its own clock slows, to half speed by the time the window is gone |
 
 Tinted rather than replaced, so the status is still legible in the colour while
