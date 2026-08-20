@@ -8,8 +8,15 @@ const TAU = Math.PI * 2;
 
 export type Scene = {
   name: string;
-  /** Relative chance of being picked at random. Defaults to 1. */
+  /** Relative chance of being picked while there is room left. Defaults to 1. */
   weight?: number;
+  /**
+   * Relative chance once the context window is spent. Defaults to `weight`.
+   *
+   * The two are interpolated, so a fresh session is mostly energetic and a spent
+   * one mostly is not - without the pool changing shape at a threshold.
+   */
+  spentWeight?: number;
   /** Seconds. Null runs until something replaces it. */
   duration: number | null;
   /**
@@ -77,7 +84,7 @@ export const drawGauge = (frame: Frame, fill: number) => {
  * rather than the subscription's, because that is the one the pet is running out
  * of head in.
  */
-const fatigueOf = (fill: number) => Math.max(0, Math.min(1, (fill - 0.5) / 0.5));
+export const fatigueOf = (fill: number) => Math.max(0, Math.min(1, (fill - 0.5) / 0.5));
 
 // Partway to red, which lands a blue status on a muted rose rather than an alarm.
 // Judged on the panel: 0.85 was harsher than it needed to be, and the eyes and
@@ -224,6 +231,7 @@ const glyphScene = (name: string, glyph: typeof HEART, color: Color, duration: n
 export const ANTICS: readonly Scene[] = [
   {
     name: "dance",
+    spentWeight: 0,
     duration: 2.6,
     paint: (frame, t, state) => {
       const beat = Math.sin(t * 7.5);
@@ -238,6 +246,7 @@ export const ANTICS: readonly Scene[] = [
 
   {
     name: "spin",
+    spentWeight: 0,
     duration: 1.8,
     paint: (frame, t) => {
       const angle = sawtooth(t, 0.6) * TAU;
@@ -252,6 +261,7 @@ export const ANTICS: readonly Scene[] = [
 
   {
     name: "wave",
+    spentWeight: 0,
     duration: 2.4,
     paint: (frame, t) => {
       for (let x = 0; x < WIDTH; x++) {
@@ -263,6 +273,7 @@ export const ANTICS: readonly Scene[] = [
 
   {
     name: "rainbow",
+    spentWeight: 0,
     duration: 2.2,
     paint: (frame, t) => {
       for (let y = 0; y < HEIGHT; y++) {
@@ -275,6 +286,7 @@ export const ANTICS: readonly Scene[] = [
 
   {
     name: "twinkle",
+    spentWeight: 0.5,
     duration: 2.4,
     paint: (frame, t) => {
       const step = Math.floor(t * 8);
@@ -288,12 +300,13 @@ export const ANTICS: readonly Scene[] = [
     },
   },
 
-  { ...glyphScene("heart", HEART, PINK, 1.8), weight: 4 },
-  glyphScene("burst", BURST, STATUS_COLORS.idle, 1.8),
-  glyphScene("bolt", BOLT, STATUS_COLORS.waiting, 1.4),
-  glyphScene("sparkle", SPARKLE, STATUS_COLORS.thinking, 1.6),
-  glyphScene("check", CHECK, STATUS_COLORS.done, 1.6),
-  glyphScene("cross", CROSS, STATUS_COLORS.error, 1.4),
+  { ...glyphScene("heart", HEART, PINK, 1.8), weight: 4, spentWeight: 1 },
+  { ...glyphScene("burst", BURST, STATUS_COLORS.idle, 1.8), spentWeight: 0 },
+  { ...glyphScene("bolt", BOLT, STATUS_COLORS.waiting, 1.4), spentWeight: 0 },
+  { ...glyphScene("sparkle", SPARKLE, STATUS_COLORS.thinking, 1.6), spentWeight: 0.5 },
+  { ...glyphScene("check", CHECK, STATUS_COLORS.done, 1.6), spentWeight: 0.5 },
+  // Rare while there is room and the commonest thing once there is not.
+  { ...glyphScene("cross", CROSS, STATUS_COLORS.error, 1.4), weight: 0.5, spentWeight: 6 },
 ];
 
 // Scenes that mean something, and so are never picked at random. A directional
@@ -339,6 +352,19 @@ export const SIGNALS: readonly Scene[] = [
 ];
 
 const NAMED = [...ANTICS, ...SIGNALS];
+
+/**
+ * How likely an antic is to be picked, given how spent the window is.
+ *
+ * Interpolated rather than switched at a threshold, so the energetic scenes fade
+ * out of the pool as it fills and the cross fades in - the pet winds down instead
+ * of changing character in one step.
+ */
+export const anticWeight = (antic: Scene, fatigue: number): number => {
+  const fresh = antic.weight ?? 1;
+
+  return fresh + ((antic.spentWeight ?? fresh) - fresh) * fatigue;
+};
 
 export const anticNamed = (name: string): Scene | null =>
   NAMED.find((scene) => scene.name === name) ?? null;

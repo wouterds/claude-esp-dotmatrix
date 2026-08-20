@@ -1,6 +1,6 @@
 import { createFrame, HEIGHT, WIDTH } from "@claude-status/matrix";
 import { describe, expect, it } from "vitest";
-import { ANTICS, anticNamed, drawGauge, SIGNALS, STATUS_SCENE } from "./scenes";
+import { ANTICS, anticNamed, anticWeight, drawGauge, SIGNALS, STATUS_SCENE } from "./scenes";
 import { deriveMood, type PetState, STATUSES } from "./state";
 
 const stateAt = (fill: number, status: PetState["status"] = "thinking"): PetState => ({
@@ -231,6 +231,51 @@ describe("ANTICS", () => {
     anticNamed("twinkle")?.paint(later, 1.9, stateAt(0.4));
 
     expect(early.toBytes()).not.toEqual(later.toBytes());
+  });
+});
+
+describe("anticWeight", () => {
+  const named = (name: string) => ANTICS.find((antic) => antic.name === name)!;
+
+  const shareOf = (name: string, fatigue: number) => {
+    const total = ANTICS.reduce((sum, antic) => sum + anticWeight(antic, fatigue), 0);
+
+    return anticWeight(named(name), fatigue) / total;
+  };
+
+  it("drains the energetic scenes out of the pool as the window fills", () => {
+    for (const name of ["dance", "spin", "wave", "rainbow", "bolt", "burst"]) {
+      expect(anticWeight(named(name), 0), name).toBeGreaterThan(0);
+      expect(anticWeight(named(name), 1), name).toBe(0);
+    }
+  });
+
+  it("makes the cross the commonest thing once there is no room left", () => {
+    expect(shareOf("cross", 0)).toBeLessThan(0.1);
+    expect(shareOf("cross", 1)).toBeGreaterThan(0.5);
+  });
+
+  it("keeps hearts frequent while there is room and rarer once there is not", () => {
+    expect(shareOf("heart", 0)).toBeGreaterThan(0.25);
+    expect(shareOf("heart", 1)).toBeLessThan(shareOf("heart", 0));
+  });
+
+  it("never goes negative, whatever the fatigue", () => {
+    for (const fatigue of [0, 0.25, 0.5, 0.75, 1]) {
+      for (const antic of ANTICS) {
+        expect(anticWeight(antic, fatigue), `${antic.name} at ${fatigue}`).toBeGreaterThanOrEqual(
+          0,
+        );
+      }
+    }
+  });
+
+  it("always leaves something to pick", () => {
+    for (const fatigue of [0, 0.5, 1]) {
+      const total = ANTICS.reduce((sum, antic) => sum + anticWeight(antic, fatigue), 0);
+
+      expect(total, `fatigue ${fatigue}`).toBeGreaterThan(0);
+    }
   });
 });
 

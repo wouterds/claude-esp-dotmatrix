@@ -141,6 +141,12 @@ once rather than picking one:
 | the eyes | half shut at 75%, one cross over the whole face at 95% |
 | the colour | tinted towards the gauge's red - a muted rose by 100%, not an alarm |
 | the pace | its own clock slows, to half speed by the time the window is gone |
+| the antics | come round less often - a little under the mean with room to spare, three times it with none |
+| which antics | the energetic ones drain out of the pool and the cross takes over |
+
+The antic weights are interpolated rather than switched at a threshold, so the pet
+winds down instead of changing character in one step. A fresh session is mostly
+hearts and dancing; a spent one is mostly the cross, rarely.
 
 Tinted rather than replaced, so the status is still legible in the colour while the
 face reddens. And only the *face* slows - the accents keep real time, because a

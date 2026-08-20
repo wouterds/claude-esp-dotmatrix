@@ -21,24 +21,41 @@ describe("createDirector", () => {
     pet.paint(createFrame(), 0, state());
     expect(pet.playing()).toBe("status");
 
-    pet.paint(createFrame(), 4.9, state());
+    // With room left in the window the interval is scaled down, so the soonest
+    // an antic can land is 0.5 * 0.6 of the mean.
+    pet.paint(createFrame(), 2.9, state());
     expect(pet.playing()).toBe("status");
 
-    pet.paint(createFrame(), 5.1, state());
+    pet.paint(createFrame(), 3.1, state());
     expect(pet.playing()).not.toBe("status");
   });
 
   it("returns to status when the antic runs out", () => {
     const pet = director(10);
     pet.paint(createFrame(), 0, state());
-    pet.paint(createFrame(), 5.1, state());
+    pet.paint(createFrame(), 3.1, state());
 
     expect(pet.playing()).not.toBe("status");
 
-    // After the longest antic ends but before the next one is due, which is
-    // half the interval past the one that just played.
-    pet.paint(createFrame(), 9, state());
+    // After the longest antic ends and before the next is due at 6.1.
+    pet.paint(createFrame(), 5.9, state());
     expect(pet.playing()).toBe("status");
+  });
+
+  it("plays up more often with room left than with none", () => {
+    const fresh = director(100);
+    const spent = director(100);
+    const spentState = { ...state(), fill: 1 };
+
+    fresh.paint(createFrame(), 0, state());
+    spent.paint(createFrame(), 0, spentState);
+
+    // Same mean, same rolls: the fresh one is due at 30s, the spent one at 150s.
+    fresh.paint(createFrame(), 31, state());
+    spent.paint(createFrame(), 31, spentState);
+
+    expect(fresh.playing()).not.toBe("status");
+    expect(spent.playing()).toBe("status");
   });
 
   it("never interrupts an error or a prompt waiting on the user", () => {
