@@ -37,9 +37,10 @@ const EYES: Record<Mood, Glyph> = {
   dead: ["#......#", ".#....#.", "..#..#..", "..#..#..", ".#....#.", "#......#"],
 };
 
-// A flat dash, dimmer than the eyes. The mood is in the eyes; a mouth that tries
-// to curve at this size is the thing that read as a smiley pasted on a readout.
-const MOUTH: Glyph = ["..####..", "..####.."];
+// Two pixels. Dimmer than the eyes, and that is the whole mouth - the mood lives
+// in the eyes, so anything wider starts competing with them and anything that
+// curves reads as a smiley pasted onto a readout.
+const MOUTH: Glyph = ["...##..."];
 
 const MOUTHLESS: readonly Mood[] = ["dead"];
 const BLUSHING: readonly Mood[] = ["happy", "excited", "zen"];
