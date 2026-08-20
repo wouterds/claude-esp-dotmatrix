@@ -10,7 +10,7 @@ often it stops and dances.
 ```bash
 npm install
 npm run firmware:flash   # once
-npm start                # the daemon - background it and leave it
+npm run pet              # start it - detaches and stays up
 npx status-install       # so it follows you into every project
 ```
 
@@ -19,6 +19,9 @@ across every project and every session at once, following whichever one you are
 actually typing in.
 
 ```bash
+npm run pet:stop         # stops it, and clears the panel on the way out
+npm run pet:restart      # after changing anything it renders
+
 npx status-show          # the panel, the sessions, the board, the daemon
 npx status-preview       # watch it in a terminal, with no board attached
 npx status-play heart

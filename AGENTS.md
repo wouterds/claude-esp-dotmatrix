@@ -25,7 +25,9 @@ Run from the repo root - turbo fans them out.
 
 | | |
 | --- | --- |
-| `npm start` | the daemon - background it and leave it |
+| `npm run pet` | start the daemon, detached |
+| `npm run pet:stop` | stop it, clearing the panel |
+| `npm run pet:restart` | after changing anything it renders |
 | `npm run lint:fix` | lint and format |
 | `npm run typecheck` | typecheck |
 | `npm test` | vitest across every workspace |

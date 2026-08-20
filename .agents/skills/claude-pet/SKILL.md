@@ -24,20 +24,20 @@ One process owns the serial port. Everything else writes a file.
 
 ```bash
 npx status-board          # is the board on usb, and does its firmware answer
-npm start                 # the daemon - run it in the background and leave it
+npm run pet               # start it - detaches, and outlives the session
 npx status-show           # board, daemon, status, mood, window, all at once
 ```
 
-Start the daemon with the Bash tool's **background mode** rather than a
-foreground call - it never returns. A backgrounded task ends with the session,
-which is the right lifetime: the pet exists to show *this* session.
+`npm run pet` is safe to run twice - it reports the pid it already has rather
+than starting a second one. `npm run pet:stop` clears the panel on the way out,
+and waits for the port to actually be released. `npm run pet:restart` is what to
+use after changing anything the daemon renders, because it loads its code once at
+startup.
 
-To outlive the session instead:
-
-```bash
-mkdir -p ~/.claude-status
-nohup npx tsx apps/daemon/src/index.ts >> ~/.claude-status/daemon.log 2>&1 &
-```
+**Do not start it as a plain backgrounded Bash call.** The daemon holds stdin, so
+npm waits on it and the call never returns - which reads as the daemon hanging
+rather than the runner holding the door open. The script closes stdin for exactly
+this reason.
 
 **A dark panel is one of four things**, and `npx status-show` names which:
 
