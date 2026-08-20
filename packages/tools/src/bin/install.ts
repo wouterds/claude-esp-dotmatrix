@@ -10,10 +10,15 @@ import { help, run, type Usage } from "../utils/usage";
 // The hooks committed in this repo only fire in this repo. A pet that works in
 // one project is a demo, so the same hook goes into the user's own settings with
 // an absolute path and follows them everywhere.
+//
+// Two things get wired: the hook, which says what a session is doing, and the
+// status line, which is the only place Claude Code reports the 5h and weekly
+// quotas. The status line slot holds one command, so an existing one is wrapped
+// rather than replaced and handed back untouched on --remove.
 
 const USAGE: Usage = {
   name: "status-install",
-  summary: "wire the status hook into every project, via your own claude settings",
+  summary: "wire the status hook and the quota statusline into every project, via your settings",
   examples: [
     ["status-install", "show exactly what would change, and change nothing"],
     ["status-install --write", "apply it, after backing the file up"],
@@ -41,11 +46,11 @@ type Entry = { matcher?: string; hooks?: { type?: string; command?: string }[] }
 
 // Walked up from this file rather than assumed, so the tool still resolves when
 // the repo is checked out somewhere else or run through a symlink.
-const hookPath = async () => {
+const scriptPath = async (file: string) => {
   let directory = dirname(fileURLToPath(import.meta.url));
 
   for (let depth = 0; depth < 8; depth++) {
-    const candidate = join(directory, ".claude", "hooks", "status.mjs");
+    const candidate = join(directory, ".claude", "hooks", file);
 
     try {
       await readFile(candidate);
@@ -56,11 +61,26 @@ const hookPath = async () => {
     }
   }
 
-  throw new Error("could not find .claude/hooks/status.mjs above this file");
+  throw new Error(`could not find .claude/hooks/${file} above this file`);
 };
 
 const holds = (entry: Entry, command: string) =>
   (entry.hooks ?? []).some((hook) => hook.command === command);
+
+type StatusLine = { type?: string; command?: string };
+
+// There is only one status line, and it is the only place Claude Code reports
+// the quotas - so wiring the pet in means taking the slot and handing whatever
+// was there the same payload. Quoted, because most such commands have spaces in
+// them and it has to arrive as a single argument.
+const quoted = (command: string) => `'${command.replace(/'/g, "'\\''")}'`;
+
+const wrappedIn = (command: string, script: string) => {
+  const argument = command.slice(script.length).trim();
+  if (!argument.startsWith("'") || !argument.endsWith("'")) return null;
+
+  return argument.slice(1, -1).replace(/'\\''/g, "'") || null;
+};
 
 run(async () => {
   const argv = process.argv.slice(2);
@@ -75,7 +95,8 @@ run(async () => {
     }
   }
 
-  const command = await hookPath();
+  const command = await scriptPath("status.mjs");
+  const statusline = await scriptPath("statusline.mjs");
   const settingsFile = join(homedir(), ".claude", "settings.json");
   const existing = await readFile(settingsFile, "utf8").catch(() => null);
 
@@ -121,8 +142,35 @@ run(async () => {
 
   settings.hooks = hooks;
 
+  const current = (settings.statusLine ?? null) as StatusLine | null;
+  const held = typeof current?.command === "string" ? current.command : "";
+  const ours = held.startsWith(statusline);
+
+  if (remove && ours) {
+    const wrapped = wrappedIn(held, statusline);
+
+    // Handed back exactly what it was wrapping, so taking the pet out leaves the
+    // status line the user chose rather than no status line at all.
+    if (wrapped) settings.statusLine = { ...current, command: wrapped };
+    else delete settings.statusLine;
+
+    changes.push(`${bad("-")} statusLine ${muted(wrapped ? `unwrapping ${wrapped}` : "")}`);
+  } else if (!remove && !ours) {
+    settings.statusLine = {
+      ...current,
+      type: "command",
+      command: held ? `${statusline} ${quoted(held)}` : statusline,
+    };
+
+    changes.push(`${good("+")} statusLine ${muted(held ? `wrapping ${held}` : "")}`);
+  }
+
   console.log(heading("hook"));
   console.log(`  ${name(command)}`);
+  console.log("");
+  console.log(heading("statusline"));
+  console.log(`  ${name(statusline)}`);
+  console.log(`  ${muted("the only thing claude code tells the 5h and weekly quotas to")}`);
   console.log("");
   console.log(heading(`settings  ${settingsFile}`));
 
