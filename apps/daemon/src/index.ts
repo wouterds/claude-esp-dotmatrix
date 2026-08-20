@@ -4,19 +4,23 @@ import {
   createDirector,
   DEFAULT_DESIRE,
   type Desire,
-  deriveMood,
   findLatestTranscript,
-  type PetState,
+  pruneSessions,
   readDesire,
+  readSessions,
   readUsage,
+  resolveState,
+  type SessionSnapshot,
   type Usage,
 } from "@claude-status/pet";
 import { claim, release } from "./lock";
 
 const FPS = Number(process.env.CLAUDE_STATUS_FPS ?? 40);
 const DESIRE_INTERVAL = 120;
+const SESSION_INTERVAL = 300;
 const USAGE_INTERVAL = 2_000;
 const RECONNECT_INTERVAL = 2_000;
+const PRUNE_INTERVAL = 5 * 60_000;
 
 const started = Date.now();
 
@@ -32,6 +36,8 @@ let matrix: Matrix | null = null;
 let connecting = false;
 let desire: Desire = DEFAULT_DESIRE;
 let usage: Usage = { tokens: 0, fill: 0, limit: CONTEXT_LIMIT };
+let snapshots: SessionSnapshot[] = [];
+let session: SessionSnapshot | null = null;
 let anticAt: number | null = null;
 let applied: { brightness: number; rotation: Rotation } | null = null;
 
@@ -71,8 +77,14 @@ const pollDesire = async () => {
   }
 };
 
+const pollSessions = async () => {
+  snapshots = await readSessions();
+};
+
 const pollUsage = async () => {
-  const transcript = await findLatestTranscript();
+  // The session being shown, so the gauge belongs to the face above it. Falling
+  // back to the newest transcript covers a session whose hooks are not wired.
+  const transcript = session?.transcript ?? (await findLatestTranscript());
   if (!transcript) return;
 
   const reading = await readUsage(transcript);
@@ -103,14 +115,10 @@ const render = () => {
       }
     }
   } else {
-    const state: PetState = {
-      status: desire.status,
-      mood: desire.mood ?? deriveMood(desire.status, usage.fill),
-      fill: usage.fill,
-      tokens: usage.tokens,
-    };
+    const resolved = resolveState(desire, snapshots, usage, Date.now());
+    session = resolved.session;
 
-    director.paint(frame, clock(), state);
+    director.paint(frame, clock(), resolved.state);
   }
 
   matrix.show(frame);
@@ -123,14 +131,18 @@ const main = async () => {
     process.exit(1);
   }
 
-  await Promise.all([pollDesire(), pollUsage()]);
+  await pruneSessions(Date.now());
+  await Promise.all([pollDesire(), pollSessions()]);
+  await pollUsage();
   await connect();
 
   const timers = [
     setInterval(render, Math.round(1_000 / FPS)),
     setInterval(pollDesire, DESIRE_INTERVAL),
+    setInterval(pollSessions, SESSION_INTERVAL),
     setInterval(pollUsage, USAGE_INTERVAL),
     setInterval(connect, RECONNECT_INTERVAL),
+    setInterval(() => pruneSessions(Date.now()), PRUNE_INTERVAL),
   ];
 
   // Ctrl-C on a terminal that is also being torn down delivers both signals, and
