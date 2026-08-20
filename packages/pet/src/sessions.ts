@@ -1,4 +1,4 @@
-import { mkdir, readdir, readFile, rename, unlink, writeFile } from "node:fs/promises";
+import { readdir, readFile, unlink } from "node:fs/promises";
 import { join } from "node:path";
 import { isStatus, type Status } from "./state";
 import { home } from "./store";
@@ -7,7 +7,7 @@ import { home } from "./store";
 // run at once and are switched between, so a single field means whichever fired
 // a hook last wins - a finished session pins the panel on "done" while another
 // is still working, and nothing ever decays back.
-export const sessionsDir = () => join(home(), "sessions");
+const sessionsDir = () => join(home(), "sessions");
 
 export type SessionSnapshot = {
   id: string;
@@ -110,17 +110,7 @@ export const attentionElsewhere = (
     (snapshot) => snapshot.id !== exclude && snapshot.status === "waiting" && isLive(snapshot, now),
   );
 
-export const writeSession = async (snapshot: Omit<SessionSnapshot, "id">, id: string) => {
-  const directory = sessionsDir();
-  await mkdir(directory, { recursive: true });
-
-  const file = join(directory, `${id}.json`);
-  const temporary = `${file}.${process.pid}.tmp`;
-  await writeFile(temporary, `${JSON.stringify(snapshot)}\n`);
-  await rename(temporary, file);
-};
-
-export const forgetSession = async (id: string) => {
+const forgetSession = async (id: string) => {
   await unlink(join(sessionsDir(), `${id}.json`)).catch(() => {});
 };
 

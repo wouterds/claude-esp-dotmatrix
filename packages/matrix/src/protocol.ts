@@ -1,6 +1,6 @@
 export const WIDTH = 8;
 export const HEIGHT = 8;
-export const LED_COUNT = WIDTH * HEIGHT;
+const LED_COUNT = WIDTH * HEIGHT;
 export const FRAME_BYTES = LED_COUNT * 3;
 
 // 64 WS2812s at full white draw 3.8 A. The firmware scales any frame that would

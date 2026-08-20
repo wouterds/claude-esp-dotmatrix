@@ -1,7 +1,7 @@
 #!/usr/bin/env -S npx tsx
 
 import { isRotation, ROTATIONS, type Rotation } from "@claude-status/matrix";
-import { type Cell, readDesire, writeDesire } from "@claude-status/pet";
+import { type Cell, writeDesire } from "@claude-status/pet";
 import { figure, heading, muted } from "../utils/colors";
 import { help, run, type Usage } from "../utils/usage";
 

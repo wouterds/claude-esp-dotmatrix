@@ -43,11 +43,3 @@ export const deriveMood = (status: Status, fill: number): Mood => {
 
   return "focused";
 };
-
-export const DEFAULT_STATE: PetState = {
-  status: "idle",
-  mood: "zen",
-  fill: 0,
-  tokens: 0,
-  attention: false,
-};

@@ -15,7 +15,7 @@ import { isMood, isStatus, type Mood, type Status } from "./state";
 // nothing in a session ever waits on or fails because of the display.
 export const home = () => process.env.CLAUDE_STATUS_HOME ?? join(homedir(), ".claude-status");
 
-export const stateFile = () => join(home(), "state.json");
+const stateFile = () => join(home(), "state.json");
 
 // Beside the state rather than in the daemon, because the tools report on the
 // daemon and both sides would otherwise carry their own idea of where it is.
