@@ -8,6 +8,7 @@ const stateAt = (fill: number, status: PetState["status"] = "thinking"): PetStat
   mood: deriveMood(status, fill),
   fill,
   tokens: Math.round(fill * 200_000),
+  attention: false,
 });
 
 const litInRow = (frame: ReturnType<typeof createFrame>, y: number) => {

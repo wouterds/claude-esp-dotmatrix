@@ -21,6 +21,8 @@ export type PetState = {
   /** How full the context window is, 0 to 1. */
   fill: number;
   tokens: number;
+  /** Some other session is blocked on the user. */
+  attention: boolean;
 };
 
 export const isStatus = (value: string): value is Status => STATUSES.includes(value as Status);
@@ -47,4 +49,5 @@ export const DEFAULT_STATE: PetState = {
   mood: "zen",
   fill: 0,
   tokens: 0,
+  attention: false,
 };

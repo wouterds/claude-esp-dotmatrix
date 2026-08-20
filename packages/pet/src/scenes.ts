@@ -145,6 +145,14 @@ export const STATUS_SCENE: Scene = {
     });
 
     ACCENTS[state.status]?.(frame, t, color);
+
+    // Another session is blocked on the user. One pixel, in the corner, on its
+    // own clock - the panel is already saying what this session is doing and
+    // arbitrating between the two would lose one of them.
+    if (state.attention) {
+      frame.add(WIDTH - 1, 0, scale(STATUS_COLORS.waiting, 0.4 + 0.6 * pulse(t, 1.1)));
+    }
+
     drawGauge(frame, state.fill);
   },
 };

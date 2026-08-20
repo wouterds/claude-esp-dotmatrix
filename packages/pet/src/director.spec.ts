@@ -8,6 +8,7 @@ const state = (status: PetState["status"] = "thinking"): PetState => ({
   mood: "focused",
   fill: 0.3,
   tokens: 60_000,
+  attention: false,
 });
 
 // 0 puts the next antic at half the mean, which is the soonest it schedules.
