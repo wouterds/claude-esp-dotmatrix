@@ -10,6 +10,7 @@ import {
   GHOST,
   HEART,
   INVADER,
+  mirrored,
   QUESTION,
   SKULL,
   SPARKLE,
@@ -285,6 +286,10 @@ export const STATUS_SCENE: Scene = {
   },
 };
 
+// Two turns across an 1.8s run: long enough to read as facing a way rather
+// than as flickering.
+const GHOST_TURN = 0.6;
+
 const glyphScene = (name: string, glyph: typeof HEART, color: Color, duration: number): Scene => ({
   name,
   duration,
@@ -513,7 +518,18 @@ export const ANTICS: readonly Scene[] = [
   { ...glyphScene("sparkle", SPARKLE, STATUS_COLORS.thinking, 1.6), spentWeight: 0.5 },
   { ...glyphScene("check", CHECK, STATUS_COLORS.done, 1.6), spentWeight: 0.5 },
   { ...glyphScene("invader", INVADER, STATUS_COLORS.done, 1.8), spentWeight: 0 },
-  { ...glyphScene("ghost", GHOST, WHITE, 1.8), spentWeight: 0.5 },
+  {
+    name: "ghost",
+    duration: 1.8,
+    spentWeight: 0.5,
+    // Turning to face the other way partway through its run, so it drifts rather
+    // than sits there. The glow is the same pulse every other glyph gets.
+    paint: (frame, t) => {
+      const facing = Math.floor(t / GHOST_TURN) % 2 === 1 ? mirrored(GHOST) : GHOST;
+
+      drawGlyph(frame, facing, scale(WHITE, 0.35 + 0.65 * pulse(t, 0.5)));
+    },
+  },
   { ...glyphScene("exclaim", EXCLAIM, STATUS_COLORS.waiting, 1.2), spentWeight: 1 },
   { ...glyphScene("question", QUESTION, STATUS_COLORS.thinking, 1.6), spentWeight: 1 },
   // These two belong to a session running out of room, so they get commoner as it
