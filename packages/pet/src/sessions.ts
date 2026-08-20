@@ -12,7 +12,10 @@ export const sessionsDir = () => join(home(), "sessions");
 export type SessionSnapshot = {
   id: string;
   status: Status;
+  /** Last time anything happened here. Decides whether the session is live. */
   at: number;
+  /** Last time the user typed into it. Decides which live session speaks. */
+  spokenAt: number | null;
   transcript: string | null;
   cwd: string | null;
 };
@@ -54,6 +57,7 @@ export const readSessions = async (): Promise<SessionSnapshot[]> => {
         id: entry.replace(/\.json$/, ""),
         status: raw.status,
         at: raw.at,
+        spokenAt: typeof raw.spokenAt === "number" ? raw.spokenAt : null,
         transcript: typeof raw.transcript === "string" ? raw.transcript : null,
         cwd: typeof raw.cwd === "string" ? raw.cwd : null,
       });
@@ -65,11 +69,22 @@ export const readSessions = async (): Promise<SessionSnapshot[]> => {
   return snapshots;
 };
 
+// Which session the user is actually in, falling back to plain activity for one
+// whose hooks were wired mid-session and has no prompt recorded yet.
+const engagedAt = (snapshot: SessionSnapshot) => snapshot.spokenAt ?? snapshot.at;
+
 /**
- * The session the panel speaks for: whichever was heard from last. Recency
- * rather than priority, because a session parked on a prompt should not stop the
- * panel showing the one actually being worked in - that is what `attentionElsewhere`
- * is for.
+ * The session the panel speaks for: of the ones still live, whichever the user
+ * typed into most recently.
+ *
+ * Ranking on plain activity instead makes two busy sessions fight - both fire
+ * hooks several times a second, so the panel flickers between two statuses and
+ * settles on neither. The last prompt is a stable key: it does not move while a
+ * session grinds, so the session being worked in keeps the panel until the user
+ * moves, and the other drops out on its own once it goes quiet.
+ *
+ * Still recency rather than priority. A session parked on a prompt must not stop
+ * the panel showing the one being worked in - `attentionElsewhere` covers that.
  */
 export const pickSession = (
   snapshots: readonly SessionSnapshot[],
@@ -78,7 +93,7 @@ export const pickSession = (
   const live = snapshots.filter((snapshot) => isLive(snapshot, now));
   if (live.length === 0) return null;
 
-  return live.reduce((best, snapshot) => (snapshot.at > best.at ? snapshot : best));
+  return live.reduce((best, snapshot) => (engagedAt(snapshot) > engagedAt(best) ? snapshot : best));
 };
 
 /**

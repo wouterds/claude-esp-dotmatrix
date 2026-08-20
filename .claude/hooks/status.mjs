@@ -82,9 +82,20 @@ try {
   } else if (status && id) {
     mkdirSync(directory, { recursive: true });
 
+    // Carried forward, because which session the panel speaks for is ranked on
+    // the last prompt and every other event has to leave that alone.
+    let spokenAt = null;
+    try {
+      spokenAt = JSON.parse(readFileSync(file, "utf8")).spokenAt ?? null;
+    } catch {
+      // First event of a session, or one caught mid-write.
+    }
+
+    const now = Date.now();
     const snapshot = {
       status,
-      at: Date.now(),
+      at: now,
+      spokenAt: event === "UserPromptSubmit" ? now : spokenAt,
       // The window is read from the session being shown rather than from
       // whichever transcript was touched last, so the gauge belongs to the face.
       transcript: payload.transcript_path ?? null,
