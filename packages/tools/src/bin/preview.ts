@@ -11,6 +11,7 @@ import {
   readDesire,
   readSessions,
   readUsage,
+  readWindow,
   resolveState,
   type SessionSnapshot,
 } from "@claude-status/pet";
@@ -74,6 +75,7 @@ run(async () => {
   let desire: Desire = await readDesire();
   let snapshots: SessionSnapshot[] = [];
   let reading = { tokens: 0, fill: 0 };
+  let sessionWindow: number | null = null;
 
   const refresh = async () => {
     desire = await readDesire();
@@ -85,6 +87,8 @@ run(async () => {
     const usage = transcript ? await readUsage(transcript) : null;
 
     if (usage) reading = { tokens: usage.tokens, fill: usage.fill };
+
+    sessionWindow = (await readWindow())?.fraction ?? null;
   };
 
   await refresh();
@@ -104,7 +108,7 @@ run(async () => {
       }
 
       const frame = createFrame();
-      const { state } = resolveState(desire, snapshots, reading, Date.now());
+      const { state } = resolveState(desire, snapshots, reading, Date.now(), sessionWindow);
 
       if (options.antic) {
         const scene = anticNamed(options.antic)!;

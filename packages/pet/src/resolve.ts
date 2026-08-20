@@ -19,6 +19,7 @@ export const resolveState = (
   snapshots: readonly SessionSnapshot[],
   usage: Pick<Usage, "tokens" | "fill">,
   now: number,
+  window: number | null = null,
 ): Resolved => {
   const session = pickSession(snapshots, now);
   // An explicit override first, then whichever session was heard from last, then
@@ -33,6 +34,7 @@ export const resolveState = (
       fill: usage.fill,
       tokens: usage.tokens,
       attention: attentionElsewhere(snapshots, now, session?.id ?? null),
+      window,
     },
   };
 };

@@ -23,6 +23,8 @@ export type PetState = {
   tokens: number;
   /** Some other session is blocked on the user. */
   attention: boolean;
+  /** How far through the rolling session window, 0 to 1. Null when unknown. */
+  window: number | null;
 };
 
 export const isStatus = (value: string): value is Status => STATUSES.includes(value as Status);

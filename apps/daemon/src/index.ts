@@ -9,6 +9,7 @@ import {
   readDesire,
   readSessions,
   readUsage,
+  readWindow,
   resolveState,
   type SessionSnapshot,
   type Usage,
@@ -19,6 +20,8 @@ const FPS = Number(process.env.CLAUDE_STATUS_FPS ?? 40);
 const DESIRE_INTERVAL = 120;
 const SESSION_INTERVAL = 300;
 const USAGE_INTERVAL = 2_000;
+// A five hour bar moves one pixel every thirty-seven minutes.
+const WINDOW_INTERVAL = 30_000;
 const RECONNECT_INTERVAL = 2_000;
 const PRUNE_INTERVAL = 5 * 60_000;
 
@@ -38,6 +41,7 @@ let desire: Desire = DEFAULT_DESIRE;
 let usage: Usage = { tokens: 0, fill: 0, limit: CONTEXT_LIMIT };
 let snapshots: SessionSnapshot[] = [];
 let session: SessionSnapshot | null = null;
+let sessionWindow: number | null = null;
 let anticAt: number | null = null;
 let applied: { brightness: number; rotation: Rotation } | null = null;
 
@@ -81,6 +85,13 @@ const pollSessions = async () => {
   snapshots = await readSessions();
 };
 
+// Time based and exact. The real session-window figure is fetched from the API
+// and cached nowhere, so what is shown is how far through the window we are -
+// which is the half that says when the limit lifts.
+const pollWindow = async () => {
+  sessionWindow = (await readWindow())?.fraction ?? null;
+};
+
 const pollUsage = async () => {
   // The session being shown, so the gauge belongs to the face above it. Falling
   // back to the newest transcript covers a session whose hooks are not wired.
@@ -115,7 +126,7 @@ const render = () => {
       }
     }
   } else {
-    const resolved = resolveState(desire, snapshots, usage, Date.now());
+    const resolved = resolveState(desire, snapshots, usage, Date.now(), sessionWindow);
 
     // A sweep when the panel changes hands, so a switch is something you see
     // rather than something you notice the aftermath of. Only on a move between
@@ -141,7 +152,7 @@ const main = async () => {
 
   await pruneSessions(Date.now());
   await Promise.all([pollDesire(), pollSessions()]);
-  await pollUsage();
+  await Promise.all([pollUsage(), pollWindow()]);
   await connect();
 
   const timers = [
@@ -149,6 +160,7 @@ const main = async () => {
     setInterval(pollDesire, DESIRE_INTERVAL),
     setInterval(pollSessions, SESSION_INTERVAL),
     setInterval(pollUsage, USAGE_INTERVAL),
+    setInterval(pollWindow, WINDOW_INTERVAL),
     setInterval(connect, RECONNECT_INTERVAL),
     setInterval(() => pruneSessions(Date.now()), PRUNE_INTERVAL),
   ];

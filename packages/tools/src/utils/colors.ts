@@ -16,14 +16,12 @@ export const good = (value: string) => pc.green(value);
 
 export const bad = (value: string) => pc.red(value);
 
-// The gauge's own thresholds, so a printed percentage is coloured the same way
-// the panel colours it. Amber where the mood tires, red where it gives out.
-const TIRED = 0.75;
-const SPENT = 0.95;
-
+// The gauge's own band edges, so a printed percentage is coloured the way the
+// panel colours it. A terminal has no orange, so the middle two bands share
+// yellow.
 export const pressure = (value: string, fill: number) => {
-  if (fill >= SPENT) return pc.red(value);
-  if (fill >= TIRED) return pc.yellow(value);
+  if (fill > 0.8) return pc.red(value);
+  if (fill > 0.4) return pc.yellow(value);
 
   return pc.green(value);
 };

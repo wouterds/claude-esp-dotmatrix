@@ -1,6 +1,6 @@
 import { createFrame, HEIGHT, WIDTH } from "@claude-status/matrix";
 import { describe, expect, it } from "vitest";
-import { ANTICS, anticNamed, drawGauge, SIGNALS, STATUS_SCENE } from "./scenes";
+import { ANTICS, anticNamed, drawGauge, drawWindow, SIGNALS, STATUS_SCENE } from "./scenes";
 import { deriveMood, type PetState, STATUSES } from "./state";
 
 const stateAt = (fill: number, status: PetState["status"] = "thinking"): PetState => ({
@@ -9,6 +9,7 @@ const stateAt = (fill: number, status: PetState["status"] = "thinking"): PetStat
   fill,
   tokens: Math.round(fill * 200_000),
   attention: false,
+  window: null,
 });
 
 const litInRow = (frame: ReturnType<typeof createFrame>, y: number) => {
@@ -81,13 +82,28 @@ describe("drawGauge", () => {
 });
 
 describe("STATUS_SCENE", () => {
-  it("leaves the gauge row to the gauge, in every status and at every moment", () => {
+  it("never lets an accent shorten a bar, in any status at any moment", () => {
+    // The orbit crosses the whole edge, bars included, on purpose - so the
+    // guarantee is not that they are left alone but that they only ever get
+    // brighter. A bar an accent could eat into would read as a smaller number.
     for (const status of STATUSES) {
       for (const t of MOMENTS) {
-        const frame = createFrame();
-        STATUS_SCENE.paint(frame, t, stateAt(0, status));
+        const alone = createFrame();
+        drawGauge(alone, 0.5);
+        drawWindow(alone, 0.5);
 
-        expect(litInRow(frame, GAUGE_ROW), `${status} at ${t}`).toEqual([]);
+        const together = createFrame();
+        STATUS_SCENE.paint(together, t, { ...stateAt(0.5, status), window: 0.5 });
+
+        for (const [row, label] of [
+          [GAUGE_ROW, "gauge"],
+          [0, "window"],
+        ] as const) {
+          expect(
+            litInRow(together, row).length,
+            `${label} in ${status} at ${t}`,
+          ).toBeGreaterThanOrEqual(litInRow(alone, row).length);
+        }
       }
     }
   });

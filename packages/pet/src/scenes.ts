@@ -1,7 +1,7 @@
 import { type Color, type Frame, HEIGHT, hsv, lerp, scale, WIDTH } from "@claude-status/matrix";
 import { drawFace } from "./faces";
 import { BOLT, BURST, CHECK, CROSS, drawGlyph, HEART, SPARKLE } from "./glyphs";
-import { GAUGE_HIGH, GAUGE_LOW, GAUGE_MID, PINK, STATUS_COLORS, WHITE } from "./palette";
+import { GAUGE_BANDS, PINK, STATUS_COLORS, WHITE, WINDOW_COLOR } from "./palette";
 import type { PetState, Status } from "./state";
 
 const TAU = Math.PI * 2;
@@ -31,32 +31,46 @@ const noise = (x: number, y: number, step: number) => {
   return ((h ^ (h >>> 16)) >>> 0) / 0xffffffff;
 };
 
-// Row 7 is the gauge and nothing else may light it - a trail adding to it makes
-// the number read high - so the loop closes across row 6 instead.
-const FACE_ROWS = HEIGHT - 1;
+// Row 0 is the session window, row 7 the context gauge, and the face has the six
+// between them.
+const WINDOW_ROW = 0;
+const GAUGE_ROW = HEIGHT - 1;
+const FACE_TOP = 1;
+const FACE_ROWS = HEIGHT - 2;
 
+// The whole perimeter, bars included. The orbit is drawn after them so it passes
+// visibly over rather than behind - and only ever adds, so a bar can be brightened
+// by it but never eaten into.
 const BORDER: readonly [number, number][] = (() => {
   const path: [number, number][] = [];
   for (let x = 0; x < WIDTH; x++) path.push([x, 0]);
-  for (let y = 1; y < FACE_ROWS; y++) path.push([WIDTH - 1, y]);
-  for (let x = WIDTH - 2; x >= 0; x--) path.push([x, FACE_ROWS - 1]);
-  for (let y = FACE_ROWS - 2; y >= 1; y--) path.push([0, y]);
+  for (let y = 1; y < HEIGHT; y++) path.push([WIDTH - 1, y]);
+  for (let x = WIDTH - 2; x >= 0; x--) path.push([x, HEIGHT - 1]);
+  for (let y = HEIGHT - 2; y >= 1; y--) path.push([0, y]);
 
   return path;
 })();
 
+// Cool and dim, so it never competes with the gauge below it for attention.
+// Elapsed time is information, not a warning - it does not redden.
+export const drawWindow = (frame: Frame, fraction: number | null) => {
+  if (fraction === null) return;
+
+  const lit = Math.max(0, Math.min(1, fraction)) * WIDTH;
+
+  for (let x = 0; x < WIDTH; x++) {
+    const amount = Math.min(1, lit - x);
+    if (amount <= 0) return;
+
+    frame.set(x, WINDOW_ROW, scale(WINDOW_COLOR, 0.25 + 0.55 * amount));
+  }
+};
+
 export const drawGauge = (frame: Frame, fill: number) => {
   const clamped = Math.max(0, Math.min(1, fill));
   const lit = clamped * WIDTH;
-  // Held green through the first half rather than ramping from empty, so the
-  // colour agrees with the face above it: amber arrives as the mood tires at
-  // three quarters, red as it gives out.
-  const color =
-    clamped < 0.5
-      ? GAUGE_LOW
-      : clamped < 0.75
-        ? lerp(GAUGE_LOW, GAUGE_MID, (clamped - 0.5) / 0.25)
-        : lerp(GAUGE_MID, GAUGE_HIGH, (clamped - 0.75) / 0.25);
+  const band = GAUGE_BANDS.find((candidate) => clamped <= candidate.upTo) ?? GAUGE_BANDS[3];
+  const color = band.color;
 
   for (let x = 0; x < WIDTH; x++) {
     // The last pixel is dimmed by however much of it is filled, so the gauge
@@ -64,7 +78,7 @@ export const drawGauge = (frame: Frame, fill: number) => {
     const amount = Math.min(1, lit - x);
     if (amount <= 0) return;
 
-    frame.set(x, HEIGHT - 1, scale(color, 0.3 + 0.7 * amount));
+    frame.set(x, GAUGE_ROW, scale(color, 0.3 + 0.7 * amount));
   }
 };
 
@@ -94,13 +108,13 @@ const ACCENTS: Partial<Record<Status, (frame: Frame, t: number, color: Color) =>
   working: (frame, t, color) => {
     const x = Math.round(pulse(t, 1.6) * (WIDTH - 1));
 
-    for (let y = 0; y < FACE_ROWS; y++) {
+    for (let y = FACE_TOP; y < FACE_TOP + FACE_ROWS; y++) {
       frame.add(x, y, scale(color, 0.35));
     }
   },
 
   reading: (frame, t, color) => {
-    const y = Math.round(pulse(t, 2.2) * (FACE_ROWS - 1));
+    const y = FACE_TOP + Math.round(pulse(t, 2.2) * (FACE_ROWS - 1));
 
     for (let x = 0; x < WIDTH; x++) {
       frame.add(x, y, scale(color, 0.3));
@@ -149,6 +163,11 @@ export const STATUS_SCENE: Scene = {
       glance: glanceAt(t),
     });
 
+    // Bars first, accents over them: the orbit is meant to be seen crossing the
+    // edge, and drawing it underneath would make it disappear behind a full bar.
+    drawWindow(frame, state.window);
+    drawGauge(frame, state.fill);
+
     ACCENTS[state.status]?.(frame, t, color);
 
     // Another session is blocked on the user. One pixel, in the corner, on its
@@ -157,8 +176,6 @@ export const STATUS_SCENE: Scene = {
     if (state.attention) {
       frame.add(WIDTH - 1, 0, scale(STATUS_COLORS.waiting, 0.4 + 0.6 * pulse(t, 1.1)));
     }
-
-    drawGauge(frame, state.fill);
   },
 };
 

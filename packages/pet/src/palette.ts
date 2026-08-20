@@ -12,11 +12,25 @@ export const STATUS_COLORS: Record<Status, Color> = {
   done: hex("#5fc97e"),
 };
 
-export const GAUGE_LOW = hex("#5fc97e");
-export const GAUGE_MID = hex("#e8c547");
-export const GAUGE_HIGH = hex("#e05252");
+// Four bands, read at a glance rather than interpolated - the point of the row
+// is the number, and a colour halfway between two stops makes the reader work
+// out which side of a boundary they are on.
+//
+// The green is deliberately short of blue. #5fc97e carried 126 of blue and read
+// as teal on the panel, because at these brightnesses the blue channel pulls
+// harder than its number suggests.
+export const GAUGE_BANDS: readonly { readonly upTo: number; readonly color: Color }[] = [
+  { upTo: 0.4, color: hex("#4ec95a") },
+  { upTo: 0.6, color: hex("#e8d047") },
+  { upTo: 0.8, color: hex("#e8933a") },
+  { upTo: 1, color: hex("#e04040") },
+];
 
 export const WHITE = hex("#ffffff");
+
+// The session window's bar. Deliberately cool and off to one side of the gauge's
+// green-to-red, so the two rows are never mistaken for each other.
+export const WINDOW_COLOR = hex("#5b8dd9");
 export const PINK = hex("#ff5f8f");
 
 // Dim, because a cheek is a hint rather than a feature. At full strength two
