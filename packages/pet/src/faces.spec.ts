@@ -49,23 +49,45 @@ describe("drawFace", () => {
     expect(blinked.toBytes()).not.toEqual(open.toBytes());
   });
 
-  it("gives the moods that blush two cheeks and the others none", () => {
-    const blushing = createFrame();
-    const plain = createFrame();
-    drawFace(blushing, "happy", white);
-    drawFace(plain, "focused", white);
-
-    expect(blushing.get(0, 4)).not.toEqual([0, 0, 0]);
-    expect(plain.get(0, 4)).toEqual([0, 0, 0]);
-  });
-
-  it("a glance moves the eyes sideways and leaves the mouth put", () => {
+  it("a gaze moves the eyes and leaves the mouth put", () => {
     const ahead = createFrame();
     const aside = createFrame();
-    drawFace(ahead, "happy", white);
-    drawFace(aside, "happy", white, { glance: 1 });
+    drawFace(ahead, "focused", white);
+    drawFace(aside, "focused", white, { gaze: [1, 0] });
 
-    expect(aside.get(2, 2)).toEqual(ahead.get(1, 2));
-    expect(aside.get(2, 6)).toEqual(ahead.get(2, 6));
+    expect(aside.get(1, 1)).toEqual(ahead.get(0, 1));
+    expect(aside.get(3, 5)).toEqual(ahead.get(3, 5));
+  });
+
+  it("looks up and down as well as sideways", () => {
+    const ahead = createFrame();
+    const up = createFrame();
+    drawFace(ahead, "focused", white);
+    drawFace(up, "focused", white, { gaze: [0, -1] });
+
+    expect(up.get(0, 0)).toEqual(ahead.get(0, 1));
+  });
+
+  it("never lets a gaze disturb the mouth itself", () => {
+    // A sideways look does cross into the mouth's two columns - what keeps them
+    // apart is the rows, not the columns, which is worth pinning down because the
+    // eye shapes have blank centres and it looks like they never could.
+    const still = createFrame();
+    drawFace(still, "focused", white);
+
+    for (const gaze of [
+      [1, 0],
+      [-1, 0],
+      [1, 1],
+      [-1, 1],
+      [0, -1],
+    ] as const) {
+      const frame = createFrame();
+      drawFace(frame, "focused", white, { gaze });
+
+      for (const x of [3, 4]) {
+        expect(frame.get(x, 5), `mouth at x=${x}, gaze=${gaze}`).toEqual(still.get(x, 5));
+      }
+    }
   });
 });

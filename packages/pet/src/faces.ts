@@ -1,19 +1,16 @@
 import type { Color, Frame } from "@claude-status/matrix";
 import { scale } from "@claude-status/matrix";
 import { drawGlyph, type Glyph } from "./glyphs";
-import { BLUSH } from "./palette";
 import type { Mood } from "./state";
 
-// Row 0 is the session window and row 7 the context gauge, so the face has rows
-// 1 to 6: eyes from the top, cheeks on 4, a dash of a mouth on 5 and 6.
+// Row 7 is the context gauge, so the face has rows 0 to 6: eyes from the top and
+// a two pixel mouth below them.
 //
 // Eyes are top-aligned rather than centred. Hung off the middle they sit visibly
 // low, because the two bars are not part of the face but the eye still reads the
 // panel's centre as its own.
 const FACE_ROW = 1;
-const CHEEK_ROW = 4;
 const MOUTH_ROW = 5;
-const CHEEKS = [0, 7];
 
 // One motif: the cross, and halves of it. No hollow diamonds - an outlined
 // diamond reads as a round eye, which is the opposite of the point.
@@ -43,14 +40,17 @@ const EYES: Record<Mood, Glyph> = {
 const MOUTH: Glyph = ["...##..."];
 
 const MOUTHLESS: readonly Mood[] = ["dead"];
-const BLUSHING: readonly Mood[] = ["happy", "excited", "zen"];
 
 export type FaceOptions = {
   /** Overrides the mood's eyes with a lid, for a blink. */
   blink?: boolean;
-  /** Shifts the eyes sideways, for a glance. */
-  glance?: number;
-  /** Shifts the whole face vertically, for a bob. */
+  /**
+   * Where the eyes are looking, as a pixel offset. Any of the eight directions
+   * and centre; the mouth stays put, which is what makes it read as a glance
+   * rather than as the whole head turning.
+   */
+  gaze?: readonly [number, number];
+  /** Shifts the whole face, for a bob. */
   bob?: number;
 };
 
@@ -58,19 +58,13 @@ export const drawFace = (
   frame: Frame,
   mood: Mood,
   color: Color,
-  { blink = false, glance = 0, bob = 0 }: FaceOptions = {},
+  { blink = false, gaze = [0, 0], bob = 0 }: FaceOptions = {},
 ) => {
-  drawGlyph(frame, blink ? EYES.tired : EYES[mood], color, glance, FACE_ROW + bob);
+  drawGlyph(frame, blink ? EYES.tired : EYES[mood], color, gaze[0], FACE_ROW + bob + gaze[1]);
 
+  // Drawn after the eyes and never moved, so however far they look the mouth is
+  // untouched. They do cross into its two columns, but rows apart from it.
   if (!MOUTHLESS.includes(mood)) {
     drawGlyph(frame, MOUTH, scale(color, 0.55), 0, MOUTH_ROW + bob);
-  }
-
-  // Pink rather than the status colour, because a cheek that changes colour with
-  // what the session is doing stops reading as a cheek.
-  if (!BLUSHING.includes(mood)) return;
-
-  for (const x of CHEEKS) {
-    frame.add(x, CHEEK_ROW + bob, BLUSH);
   }
 };

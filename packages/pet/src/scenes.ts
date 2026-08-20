@@ -89,11 +89,32 @@ const SLOWEST = 0.5;
 // of locking into one repeating tic.
 const isBlinking = (t: number) => t % 4.3 < 0.14;
 
-const glanceAt = (t: number) => {
-  const phase = sawtooth(t, 11);
-  if (phase < 0.78) return 0;
+// The eight directions and centre. Looking ahead most of the time and then
+// somewhere for a moment is what separates a face from a graphic - a fixed
+// horizontal flick used two of the nine and read as a tic.
+const GAZE: readonly (readonly [number, number])[] = [
+  [1, 0],
+  [-1, 0],
+  [0, -1],
+  [0, 1],
+  [1, -1],
+  [-1, -1],
+  [1, 1],
+  [-1, 1],
+];
 
-  return phase < 0.89 ? -1 : 1;
+const GAZE_PERIOD = 3.7;
+const AHEAD = 0.62;
+
+const gazeAt = (t: number): readonly [number, number] => {
+  const phase = (t % GAZE_PERIOD) / GAZE_PERIOD;
+  if (phase < AHEAD) return [0, 0];
+
+  // Hashed off the interval rather than random, so a scene stays a pure function
+  // of its inputs and holds one direction for the whole glance.
+  const step = Math.floor(t / GAZE_PERIOD);
+
+  return GAZE[Math.min(GAZE.length - 1, Math.floor(noise(3, 7, step) * GAZE.length))];
 };
 
 // An accent says what the session is doing without competing with the face for
@@ -171,7 +192,7 @@ export const STATUS_SCENE: Scene = {
 
     drawFace(frame, state.mood, scale(color, faceBrightness(state.status, weary)), {
       blink: isBlinking(weary),
-      glance: glanceAt(weary),
+      gaze: gazeAt(weary),
     });
 
     // Gauge first, accents over it: the orbit is meant to be seen crossing the
@@ -205,7 +226,7 @@ export const ANTICS: readonly Scene[] = [
       const beat = Math.sin(t * 7.5);
 
       drawFace(frame, state.mood, hsv(sawtooth(t, 1.4), 0.85, 1), {
-        glance: beat > 0 ? 1 : -1,
+        gaze: [beat > 0 ? 1 : -1, 0],
         bob: beat > 0.5 ? -1 : 0,
       });
       drawGauge(frame, state.fill);

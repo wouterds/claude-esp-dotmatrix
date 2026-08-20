@@ -1,4 +1,4 @@
-import { type Color, hex, scale } from "@claude-status/matrix";
+import { type Color, hex } from "@claude-status/matrix";
 import type { Status } from "./state";
 
 export const STATUS_COLORS: Record<Status, Color> = {
@@ -32,7 +32,3 @@ export const EXHAUSTED = hex("#e04040");
 
 export const WHITE = hex("#ffffff");
 export const PINK = hex("#ff5f8f");
-
-// Dim, because a cheek is a hint rather than a feature. At full strength two pink
-// pixels beside the eyes read as part of the expression.
-export const BLUSH = scale(hex("#ff5f8f"), 0.35);

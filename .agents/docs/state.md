@@ -72,6 +72,19 @@ being worked in, one pulsing corner pixel for a *different* session that is
 waiting. When the session being shown is itself waiting, the panel already says
 so and the pip is not drawn.
 
+## Why it reads as alive
+
+Two things, both pure functions of the clock so no scene carries state:
+
+- **A blink** every 4.3 seconds, held for a seventh of one
+- **A gaze** every 3.7 seconds: ahead for most of the interval, then one of the
+  eight directions for the rest. Hashed off the interval rather than drawn at
+  random, so it holds one direction for the whole glance
+
+The periods are prime-ish against each other on purpose, so the two drift instead
+of locking into one repeating tic. Only the eyes move for a gaze - the mouth
+staying put is what makes it read as a glance rather than the whole head turning.
+
 ## Running out of head
 
 Past halfway through the context window the face starts to give, and it does it
