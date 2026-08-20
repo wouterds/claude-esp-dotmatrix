@@ -45,10 +45,9 @@ describe("drawFace", () => {
     drawFace(open, "happy", white);
     drawFace(blinked, "happy", white, { blink: true });
 
-    // Row 1 is the top of an open eye and empty on a closed one. Probing lower
-    // proves nothing: a lid is wider than an eye, so the rows they share are lit
-    // either way.
-    expect(blinked.get(1, 1)).not.toEqual(open.get(1, 1));
+    // A lid is wider than an eye, so probe the column only the lid reaches.
+    // The rows they share are lit either way and prove nothing.
+    expect(blinked.get(0, 1)).not.toEqual(open.get(0, 1));
     expect(blinked.get(3, 6)).toEqual(open.get(3, 6));
   });
 
@@ -58,8 +57,8 @@ describe("drawFace", () => {
     drawFace(blushing, "happy", white);
     drawFace(plain, "focused", white);
 
-    expect(blushing.get(1, 4)).not.toEqual([0, 0, 0]);
-    expect(plain.get(1, 4)).toEqual([0, 0, 0]);
+    expect(blushing.get(1, 3)).not.toEqual([0, 0, 0]);
+    expect(plain.get(1, 3)).toEqual([0, 0, 0]);
   });
 
   it("a glance moves the eyes sideways and leaves the mouth put", () => {
