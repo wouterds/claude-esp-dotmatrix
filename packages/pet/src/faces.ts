@@ -15,25 +15,25 @@ const CHEEK_ROW = 4;
 const MOUTH_ROW = 5;
 const CHEEKS = [0, 7];
 
-// Crosses, carets and hollow diamonds - diagonals throughout, no rectangles. A
-// 2x2 block reads as a pixel that happens to be on; a cross reads as drawn, and
-// one motif at different sizes and halves covers every mood.
+// One motif: the cross, and halves of it. No hollow diamonds - an outlined
+// diamond reads as a round eye, which is the opposite of the point.
+//
+// Five shapes cover seven moods, and that is deliberate. The status already has
+// its own colour, so the eyes only have to carry how the session *feels* - awake,
+// content, drooping, cross, or done for. Splitting further would mean shapes that
+// differ by one pixel and say nothing.
 const EYES: Record<Mood, Glyph> = {
-  // The tallest hollow diamonds - wide open.
-  excited: [".#....#.", "#.#..#.#", "#.#..#.#", ".#....#."],
-  // Hollow diamonds. Open, ordinary.
-  happy: [".#....#.", "#.#..#.#", ".#....#."],
-  // Full crosses. Locked on.
+  // Full crosses. Wide awake, locked on.
+  excited: ["#.#..#.#", ".#....#.", "#.#..#.#"],
   focused: ["#.#..#.#", ".#....#.", "#.#..#.#"],
-  // The top half of a cross - two v's, drooping.
-  tired: ["#.#..#.#", ".#....#."],
-  // The bottom half - two carets, shut and pleased about it.
+  // The bottom half - two carets. Shut, and pleased about it.
+  happy: ["........", ".#....#.", "#.#..#.#"],
   zen: ["........", ".#....#.", "#.#..#.#"],
+  // The top half - two v's, drooping.
+  tired: ["#.#..#.#", ".#....#."],
   // A brow slanting inwards over a cross.
   annoyed: ["#......#", "#.#..#.#", ".#....#."],
   // One cross over the whole face rather than one per eye, and no mouth with it.
-  // Unmistakable, and it keeps the motif instead of introducing a shape used
-  // nowhere else.
   dead: ["#......#", ".#....#.", "..#..#..", "..#..#..", ".#....#.", "#......#"],
 };
 
