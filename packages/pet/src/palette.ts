@@ -12,9 +12,9 @@ export const STATUS_COLORS: Record<Status, Color> = {
   done: hex("#5fc97e"),
 };
 
-// Four bands, read at a glance rather than interpolated - the point of the row
-// is the number, and a colour halfway between two stops makes the reader work
-// out which side of a boundary they are on.
+// Four bands, read at a glance rather than interpolated - the point of the row is
+// the number, and a colour halfway between two stops makes the reader work out
+// which side of a boundary they are on.
 //
 // The green is deliberately short of blue. #5fc97e carried 126 of blue and read
 // as teal on the panel, because at these brightnesses the blue channel pulls
@@ -27,12 +27,8 @@ export const GAUGE_BANDS: readonly { readonly upTo: number; readonly color: Colo
 ];
 
 export const WHITE = hex("#ffffff");
-
-// The session window's bar. Deliberately cool and off to one side of the gauge's
-// green-to-red, so the two rows are never mistaken for each other.
-export const WINDOW_COLOR = hex("#5b8dd9");
 export const PINK = hex("#ff5f8f");
 
-// Dim, because a cheek is a hint rather than a feature. At full strength two
-// pink pixels beside the eyes read as part of the expression.
+// Dim, because a cheek is a hint rather than a feature. At full strength two pink
+// pixels beside the eyes read as part of the expression.
 export const BLUSH = scale(hex("#ff5f8f"), 0.35);

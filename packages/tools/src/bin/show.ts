@@ -11,6 +11,7 @@ import {
   readDesire,
   readSessions,
   readUsage,
+  readWindow,
   resolveState,
 } from "@claude-status/pet";
 import { bad, figure, good, heading, muted, name, pressure } from "../utils/colors";
@@ -62,6 +63,7 @@ run(async () => {
   ]);
 
   const shown = pickSession(snapshots, now);
+  const window = await readWindow(now);
   const transcript = shown?.transcript ?? (await findLatestTranscript());
   const usage = transcript ? await readUsage(transcript) : null;
   const reading = { tokens: usage?.tokens ?? 0, fill: usage?.fill ?? 0 };
@@ -87,6 +89,17 @@ run(async () => {
         : muted("no transcript found"),
     ),
     row("full", usage ? pressure(`${Math.round(reading.fill * 100)}%`, reading.fill) : muted("-")),
+    // Time through the rolling session window, not usage of it - the figure
+    // `/usage` reports is fetched from the API and cached nowhere on disk. It is
+    // reported here rather than on the panel, which has no row to spare.
+    row(
+      "session",
+      window
+        ? `${figure(`${Math.round(window.fraction * 100)}%`)} ${muted(
+            `through the 5h window, resets ${new Date(window.resetsAt).toLocaleTimeString()}`,
+          )}`
+        : muted("no window open"),
+    ),
     "",
     heading("sessions"),
   ];

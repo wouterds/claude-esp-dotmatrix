@@ -1,7 +1,7 @@
 import { type Color, type Frame, HEIGHT, hsv, scale, WIDTH } from "@claude-status/matrix";
 import { drawFace } from "./faces";
 import { BOLT, BURST, CHECK, CROSS, drawGlyph, HEART, SPARKLE } from "./glyphs";
-import { GAUGE_BANDS, PINK, STATUS_COLORS, WHITE, WINDOW_COLOR } from "./palette";
+import { GAUGE_BANDS, PINK, STATUS_COLORS, WHITE } from "./palette";
 import type { PetState, Status } from "./state";
 
 const TAU = Math.PI * 2;
@@ -33,16 +33,15 @@ const noise = (x: number, y: number, step: number) => {
   return ((h ^ (h >>> 16)) >>> 0) / 0xffffffff;
 };
 
-// Row 0 is the session window, row 7 the context gauge, and the face has the six
-// between them.
-const WINDOW_ROW = 0;
+// Row 7 is the context gauge. Row 0 carries nothing of its own, which leaves it
+// to the spinner.
 const GAUGE_ROW = HEIGHT - 1;
 const FACE_TOP = 1;
 const FACE_ROWS = HEIGHT - 2;
 
-// The whole perimeter, bars included. The orbit is drawn after them so it passes
-// visibly over rather than behind - and only ever adds, so a bar can be brightened
-// by it but never eaten into.
+// The whole perimeter, the gauge row included. The orbit is drawn after the gauge
+// so it passes visibly over rather than behind - and only ever adds, so the bar
+// can be brightened by it but never eaten into.
 const BORDER: readonly [number, number][] = (() => {
   const path: [number, number][] = [];
   for (let x = 0; x < WIDTH; x++) path.push([x, 0]);
@@ -52,21 +51,6 @@ const BORDER: readonly [number, number][] = (() => {
 
   return path;
 })();
-
-// Cool and dim, so it never competes with the gauge below it for attention.
-// Elapsed time is information, not a warning - it does not redden.
-export const drawWindow = (frame: Frame, fraction: number | null) => {
-  if (fraction === null) return;
-
-  const lit = Math.max(0, Math.min(1, fraction)) * WIDTH;
-
-  for (let x = 0; x < WIDTH; x++) {
-    const amount = Math.min(1, lit - x);
-    if (amount <= 0) return;
-
-    frame.set(x, WINDOW_ROW, scale(WINDOW_COLOR, 0.25 + 0.55 * amount));
-  }
-};
 
 export const drawGauge = (frame: Frame, fill: number) => {
   const clamped = Math.max(0, Math.min(1, fill));
@@ -165,9 +149,8 @@ export const STATUS_SCENE: Scene = {
       glance: glanceAt(t),
     });
 
-    // Bars first, accents over them: the orbit is meant to be seen crossing the
-    // edge, and drawing it underneath would make it disappear behind a full bar.
-    drawWindow(frame, state.window);
+    // Gauge first, accents over it: the orbit is meant to be seen crossing the
+    // edge, and drawing it underneath would make it vanish behind a full bar.
     drawGauge(frame, state.fill);
 
     ACCENTS[state.status]?.(frame, t, color);
