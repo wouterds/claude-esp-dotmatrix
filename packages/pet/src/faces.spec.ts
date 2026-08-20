@@ -21,11 +21,12 @@ const litRows = (frame: ReturnType<typeof createFrame>) => {
 const white = [255, 255, 255] as const;
 
 describe("drawFace", () => {
-  it("keeps the bottom row clear for the gauge, in every mood", () => {
+  it("keeps the top and bottom rows clear for the two bars, in every mood", () => {
     for (const mood of MOODS) {
       const frame = createFrame();
       drawFace(frame, mood, white);
 
+      expect(litRows(frame), mood).not.toContain(0);
       expect(litRows(frame), mood).not.toContain(7);
     }
   });
@@ -39,16 +40,13 @@ describe("drawFace", () => {
     }
   });
 
-  it("blinking changes the eyes and leaves the mouth where it was", () => {
+  it("blinking swaps the eyes for a lid", () => {
     const open = createFrame();
     const blinked = createFrame();
     drawFace(open, "happy", white);
     drawFace(blinked, "happy", white, { blink: true });
 
-    // A lid is wider than an eye, so probe the column only the lid reaches.
-    // The rows they share are lit either way and prove nothing.
-    expect(blinked.get(0, 1)).not.toEqual(open.get(0, 1));
-    expect(blinked.get(3, 6)).toEqual(open.get(3, 6));
+    expect(blinked.toBytes()).not.toEqual(open.toBytes());
   });
 
   it("gives the moods that blush two cheeks and the others none", () => {
@@ -57,8 +55,8 @@ describe("drawFace", () => {
     drawFace(blushing, "happy", white);
     drawFace(plain, "focused", white);
 
-    expect(blushing.get(1, 3)).not.toEqual([0, 0, 0]);
-    expect(plain.get(1, 3)).toEqual([0, 0, 0]);
+    expect(blushing.get(1, 6)).not.toEqual([0, 0, 0]);
+    expect(plain.get(1, 6)).toEqual([0, 0, 0]);
   });
 
   it("a glance moves the eyes sideways and leaves the mouth put", () => {
