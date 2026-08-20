@@ -19,18 +19,19 @@
       "dependsOn": ["^test"],
       "outputs": []
     },
-    // Turbo hands a task nothing it was not told about, and the daemon resolves
-    // its serial port and its socket from these. Left off, it opens the default
-    // device and quietly drives the wrong board.
+    // Turbo hands a task nothing it was not told about. Left off, the daemon
+    // silently falls back to the default home - so a second one started against
+    // another directory takes the pid lock, finds the port already held by the
+    // first, and reports a cable fault.
     "start": {
       "persistent": true,
       "cache": false,
-      "env": ["CLAUDE_STATUS_BRIGHTNESS", "CLAUDE_STATUS_PORT", "CLAUDE_STATUS_SOCKET"]
+      "env": ["CLAUDE_STATUS_ANTIC_INTERVAL", "CLAUDE_STATUS_FPS", "CLAUDE_STATUS_HOME"]
     },
     "dev": {
       "persistent": true,
       "cache": false,
-      "env": ["CLAUDE_STATUS_BRIGHTNESS", "CLAUDE_STATUS_PORT", "CLAUDE_STATUS_SOCKET"]
+      "env": ["CLAUDE_STATUS_ANTIC_INTERVAL", "CLAUDE_STATUS_FPS", "CLAUDE_STATUS_HOME"]
     }
   }
 }
