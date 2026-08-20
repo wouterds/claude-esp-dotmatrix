@@ -3,14 +3,22 @@ import { scale } from "@claude-status/matrix";
 import { drawGlyph, type Glyph } from "./glyphs";
 import type { Mood } from "./state";
 
-// Row 7 is the context gauge, so the face has rows 0 to 6: eyes from the top and
-// a two pixel mouth below them.
+// Row 7 is the context gauge and row 0 is left to the spinner, so the face has
+// rows 1 to 6: eyes on 2 to 4 and a two pixel mouth on 6.
+//
+// The eyes sit a row down from the top on purpose. Looking up shifts them by one,
+// and from row 1 that puts pixels on row 0 - where two lit corners read as stray
+// debris rather than as part of a face.
 //
 // Eyes are top-aligned rather than centred. Hung off the middle they sit visibly
 // low, because the two bars are not part of the face but the eye still reads the
 // panel's centre as its own.
-const FACE_ROW = 1;
-const MOUTH_ROW = 5;
+const FACE_ROW = 2;
+const MOUTH_ROW = 6;
+
+// Dead is the one shape that needs the whole face, and the one that has no
+// business looking around.
+const DEAD_ROW = 1;
 
 // One motif: the cross, and halves of it. No hollow diamonds - an outlined
 // diamond reads as a round eye, which is the opposite of the point.
@@ -21,13 +29,24 @@ const MOUTH_ROW = 5;
 // differ by one pixel and say nothing.
 const EYES: Record<Mood, Glyph> = {
   // Full crosses. Wide awake, locked on.
+  // Full crosses. Wide awake.
   excited: ["#.#..#.#", ".#....#.", "#.#..#.#"],
-  focused: ["#.#..#.#", ".#....#.", "#.#..#.#"],
+  // Sideways arrows, turned in on each other. Concentrating.
+  //
+  // Inset a column from the edges, unlike the rest: its lit pixels are only the
+  // arrow tips, so at x=0 and x=7 a sideways glance clipped one arrow away
+  // entirely rather than trimming an edge off it.
+  focused: [".#....#.", "..#..#..", ".#....#."],
+
   // The bottom half - two carets. Shut, and pleased about it.
   happy: ["........", ".#....#.", "#.#..#.#"],
   zen: ["........", ".#....#.", "#.#..#.#"],
-  // The top half - two v's, drooping.
-  tired: ["#.#..#.#", ".#....#."],
+  // Nearly shut: one pixel each. The top half of a cross was the obvious droop and
+  // the wrong one - two v's read as a scowl rather than as fatigue.
+  //
+  // It doubles as the blink, which is what a blink should be anyway: an eye almost
+  // closed, not an eye swapped for a different shape.
+  tired: [".#....#."],
   // A brow slanting inwards over a cross.
   annoyed: ["#......#", "#.#..#.#", ".#....#."],
   // One cross over the whole face rather than one per eye, and no mouth with it.
@@ -60,7 +79,11 @@ export const drawFace = (
   color: Color,
   { blink = false, gaze = [0, 0], bob = 0 }: FaceOptions = {},
 ) => {
-  drawGlyph(frame, blink ? EYES.tired : EYES[mood], color, gaze[0], FACE_ROW + bob + gaze[1]);
+  const dead = mood === "dead" && !blink;
+  const row = dead ? DEAD_ROW : FACE_ROW;
+  const [dx, dy] = dead ? [0, 0] : gaze;
+
+  drawGlyph(frame, blink ? EYES.tired : EYES[mood], color, dx, row + bob + dy);
 
   // Drawn after the eyes and never moved, so however far they look the mouth is
   // untouched. They do cross into its two columns, but rows apart from it.

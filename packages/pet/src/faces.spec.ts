@@ -21,13 +21,23 @@ const litRows = (frame: ReturnType<typeof createFrame>) => {
 const white = [255, 255, 255] as const;
 
 describe("drawFace", () => {
-  it("keeps the top and bottom rows clear for the two bars, in every mood", () => {
+  it("keeps row 0 and the gauge row clear, in every mood and at every gaze", () => {
+    // Including while looking up, which is what used to put two lit pixels on
+    // row 0 where they read as stray debris rather than as a face.
     for (const mood of MOODS) {
-      const frame = createFrame();
-      drawFace(frame, mood, white);
+      for (const gaze of [
+        [0, 0],
+        [0, -1],
+        [0, 1],
+        [1, -1],
+        [-1, -1],
+      ] as const) {
+        const frame = createFrame();
+        drawFace(frame, mood, white, { gaze });
 
-      expect(litRows(frame), mood).not.toContain(0);
-      expect(litRows(frame), mood).not.toContain(7);
+        expect(litRows(frame), `${mood} gaze=${gaze}`).not.toContain(0);
+        expect(litRows(frame), `${mood} gaze=${gaze}`).not.toContain(7);
+      }
     }
   });
 
@@ -55,8 +65,8 @@ describe("drawFace", () => {
     drawFace(ahead, "focused", white);
     drawFace(aside, "focused", white, { gaze: [1, 0] });
 
-    expect(aside.get(1, 1)).toEqual(ahead.get(0, 1));
-    expect(aside.get(3, 5)).toEqual(ahead.get(3, 5));
+    expect(aside.get(1, 2)).toEqual(ahead.get(0, 2));
+    expect(aside.get(3, 6)).toEqual(ahead.get(3, 6));
   });
 
   it("looks up and down as well as sideways", () => {
@@ -65,7 +75,7 @@ describe("drawFace", () => {
     drawFace(ahead, "focused", white);
     drawFace(up, "focused", white, { gaze: [0, -1] });
 
-    expect(up.get(0, 0)).toEqual(ahead.get(0, 1));
+    expect(up.get(0, 1)).toEqual(ahead.get(0, 2));
   });
 
   it("never lets a gaze disturb the mouth itself", () => {
@@ -86,7 +96,7 @@ describe("drawFace", () => {
       drawFace(frame, "focused", white, { gaze });
 
       for (const x of [3, 4]) {
-        expect(frame.get(x, 5), `mouth at x=${x}, gaze=${gaze}`).toEqual(still.get(x, 5));
+        expect(frame.get(x, 6), `mouth at x=${x}, gaze=${gaze}`).toEqual(still.get(x, 6));
       }
     }
   });
