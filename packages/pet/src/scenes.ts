@@ -8,6 +8,8 @@ const TAU = Math.PI * 2;
 
 export type Scene = {
   name: string;
+  /** Relative chance of being picked at random. Defaults to 1. */
+  weight?: number;
   /** Seconds. Null runs until something replaces it. */
   duration: number | null;
   /**
@@ -254,7 +256,7 @@ export const ANTICS: readonly Scene[] = [
     },
   },
 
-  glyphScene("heart", HEART, PINK, 1.8),
+  { ...glyphScene("heart", HEART, PINK, 1.8), weight: 4 },
   glyphScene("burst", BURST, STATUS_COLORS.idle, 1.8),
   glyphScene("bolt", BOLT, STATUS_COLORS.waiting, 1.4),
   glyphScene("sparkle", SPARKLE, STATUS_COLORS.thinking, 1.6),

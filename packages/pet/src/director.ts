@@ -47,7 +47,20 @@ export const createDirector = ({
     schedule(now);
   };
 
-  const pick = () => ANTICS[Math.min(ANTICS.length - 1, Math.floor(random() * ANTICS.length))];
+  // Weighted, so a favourite can come up more often without being listed twice
+  // in the pool - which would also make it two entries to keep in step.
+  const total = ANTICS.reduce((sum, antic) => sum + (antic.weight ?? 1), 0);
+
+  const pick = () => {
+    let ticket = random() * total;
+
+    for (const antic of ANTICS) {
+      ticket -= antic.weight ?? 1;
+      if (ticket < 0) return antic;
+    }
+
+    return ANTICS[ANTICS.length - 1];
+  };
 
   const paint: Director["paint"] = (frame, now, state) => {
     if (nextAt === null) schedule(now);
