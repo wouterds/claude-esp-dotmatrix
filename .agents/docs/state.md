@@ -74,8 +74,8 @@ The daemon interjects one every 24 seconds or so with a fresh window, stretching
 to two minutes with a spent one. Nothing has to ask for it.
 
 **Only `error` and a spent quota suppress them.** A red flashing face is the
-message and an antic replaces the face. `waiting` used to suppress them too, and that was a bug rather
-than a policy: Claude Code raises a notification once a session has been idle a
+message and an antic replaces the face. `waiting` used to suppress them too,
+and that was a bug rather than a policy: Claude Code raises a notification once a session has been idle a
 minute, so sitting at the desk doing nothing set the status to waiting and stopped
 the antics altogether - the panel went still exactly when there was most reason
 for it not to be.
