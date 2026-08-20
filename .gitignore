@@ -1,0 +1,26 @@
+node_modules
+
+build/
+.turbo
+.env
+
+.DS_Store
+
+# PlatformIO's build tree and its downloaded toolchains. Hundreds of megabytes
+# per platform, restored by `pio run`.
+firmware/.pio/
+
+# Local agent state - worktrees and machine-specific settings. The skills
+# symlink is committed on top of this, so the skills themselves live in
+# .agents/ and stay reviewable.
+#
+# The contents rather than the directory, because git cannot re-include a file
+# whose parent is excluded - and `settings.json` has to be committed. It is what
+# grants a session permission to drive the display without a human approving
+# every frame.
+.claude/*
+!.claude/settings.json
+!.claude/hooks/
+
+# Where the daemon keeps its socket and pid. Runtime state of one machine.
+/.run/
