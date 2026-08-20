@@ -26,6 +26,10 @@ export const GAUGE_BANDS: readonly { readonly upTo: number; readonly color: Colo
   { upTo: 1, color: hex("#e04040") },
 ];
 
+// What the face is tinted towards as the context window fills. The same red the
+// gauge ends on, so the two halves of the panel agree about how bad it is.
+export const EXHAUSTED = hex("#e04040");
+
 export const WHITE = hex("#ffffff");
 export const PINK = hex("#ff5f8f");
 

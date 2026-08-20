@@ -1,7 +1,7 @@
-import { type Color, type Frame, HEIGHT, hsv, scale, WIDTH } from "@claude-status/matrix";
+import { type Color, type Frame, HEIGHT, hsv, lerp, scale, WIDTH } from "@claude-status/matrix";
 import { drawFace } from "./faces";
 import { BOLT, BURST, CHECK, CROSS, drawGlyph, HEART, SPARKLE } from "./glyphs";
-import { GAUGE_BANDS, PINK, STATUS_COLORS, WHITE } from "./palette";
+import { EXHAUSTED, GAUGE_BANDS, PINK, STATUS_COLORS, WHITE } from "./palette";
 import type { PetState, Status } from "./state";
 
 const TAU = Math.PI * 2;
@@ -67,6 +67,22 @@ export const drawGauge = (frame: Frame, fill: number) => {
     frame.set(x, GAUGE_ROW, scale(color, 0.3 + 0.7 * amount));
   }
 };
+
+/**
+ * How spent the session is: nothing until the window is half gone, all the way by
+ * the time it is full.
+ *
+ * Drives two things the eyes cannot say on their own - the face is tinted towards
+ * the gauge's red, and its own clock slows down. Both are on the *context* window
+ * rather than the subscription's, because that is the one the pet is running out
+ * of head in.
+ */
+const fatigueOf = (fill: number) => Math.max(0, Math.min(1, (fill - 0.5) / 0.5));
+
+// Most of the way to red at the top end. At 0.6 a blue status only reached a
+// muted rose, which reads as a colour choice rather than as a warning.
+const TINT = 0.85;
+const SLOWEST = 0.5;
 
 // Prime-ish periods, so a blink and a glance drift against each other instead
 // of locking into one repeating tic.
@@ -142,11 +158,19 @@ export const STATUS_SCENE: Scene = {
   name: "status",
   duration: null,
   paint: (frame, t, state) => {
-    const color = STATUS_COLORS[state.status];
+    const fatigue = fatigueOf(state.fill);
+    // Tinted rather than replaced, so the status is still legible in the colour
+    // while the face reddens.
+    const color = lerp(STATUS_COLORS[state.status], EXHAUSTED, TINT * fatigue);
+    // The face keeps its own clock, and it drags. Blinking and looking around go
+    // half speed by the time the window is gone - the accents stay on real time,
+    // because a slow spinner reads as the machine lagging rather than the pet
+    // being tired.
+    const weary = t * (1 - SLOWEST * fatigue);
 
-    drawFace(frame, state.mood, scale(color, faceBrightness(state.status, t)), {
-      blink: isBlinking(t),
-      glance: glanceAt(t),
+    drawFace(frame, state.mood, scale(color, faceBrightness(state.status, weary)), {
+      blink: isBlinking(weary),
+      glance: glanceAt(weary),
     });
 
     // Gauge first, accents over it: the orbit is meant to be seen crossing the

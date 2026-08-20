@@ -72,6 +72,25 @@ being worked in, one pulsing corner pixel for a *different* session that is
 waiting. When the session being shown is itself waiting, the panel already says
 so and the pip is not drawn.
 
+## Running out of head
+
+Past halfway through the context window the face starts to give, and it does it
+three ways at once rather than picking one:
+
+| | |
+| --- | --- |
+| the eyes | droop to the top half of a cross at 75%, become one full-face cross at 95% |
+| the colour | tinted towards the gauge's red, most of the way there by 100% |
+| the pace | its own clock slows, to half speed by the time the window is gone |
+
+Tinted rather than replaced, so the status is still legible in the colour while
+the face reddens. And only the *face* slows - the accents keep real time, because
+a sluggish spinner reads as the machine lagging rather than as the pet being
+tired.
+
+All three run off the **context** window, not the subscription's. That is the one
+the pet is running out of head in.
+
 ## The two bars
 
 Row 0 and row 7 are numbers, not decoration, and the face has the six rows
