@@ -10,17 +10,20 @@ build/
 # per platform, restored by `pio run`.
 firmware/.pio/
 
-# Local agent state - worktrees and machine-specific settings. The skills
-# symlink is committed on top of this, so the skills themselves live in
-# .agents/ and stay reviewable.
+# Local agent state - worktrees and machine-specific settings. What is committed
+# is the wiring: the settings that grant a session permission to drive the
+# display, the hooks that follow the session, and a symlink to the skills, which
+# live in .agents/ and stay reviewable.
 #
-# The contents rather than the directory, because git cannot re-include a file
-# whose parent is excluded - and `settings.json` has to be committed. It is what
-# grants a session permission to drive the display without a human approving
-# every frame.
+# The directory is allowed back in first. A global gitignore excluding `.claude/`
+# is common, git will not descend into an excluded directory, and no negation
+# inside one can re-include anything until the directory itself is permitted -
+# which presents as these files simply never showing up in `git status`.
+!.claude/
 .claude/*
-!.claude/settings.json
 !.claude/hooks/
+!.claude/settings.json
+!.claude/skills
 
 # Where the daemon keeps its socket and pid. Runtime state of one machine.
 /.run/
