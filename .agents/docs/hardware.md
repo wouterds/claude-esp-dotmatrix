@@ -57,6 +57,24 @@ uhubctl -l <hub> -p <port> -a cycle -d 3
 
 Otherwise, unplug it.
 
+## The strip is RGB
+
+Not the GRB that most WS2812 panels want. Measured rather than guessed: a frame
+of pure red came back green, which is exactly what an RGB strip does when it is
+handed GRB bytes.
+
+**Check the colours before believing anything about the geometry.** Getting this
+wrong disguises itself as a wiring fault, because it swaps red and green - so an
+orientation marker's two arms come back with their *colours* exchanged while
+sitting in exactly the right places. That reads as the arms being in the wrong
+places, and "correcting" it transposes a panel that was already right. The tell
+that it is colour and not geometry is a colour appearing that was never sent.
+
+## Brightness
+
+The working range is **single digits**. 48 is genuinely blinding at desk
+distance, and the ceiling of 96 exists for a bright room rather than for use.
+
 ## Power
 
 A WS2812 channel draws about 20mA wide open, so a full white panel wants **3.8A**
