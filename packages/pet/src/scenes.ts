@@ -406,28 +406,6 @@ const PLAYFUL: readonly Scene[] = [
   },
 
   {
-    name: "ripple",
-    duration: 2.2,
-    spentWeight: 0.5,
-    paint: (frame, t, _state, seed = 0) => {
-      // Diamonds rather than circles: a circle on eight pixels is a lumpy square,
-      // where a diamond is exactly itself.
-      for (const ring of [0, 3, 6]) {
-        const radius = (t * 4.5 + ring) % 9;
-
-        for (let y = 0; y < HEIGHT; y++) {
-          for (let x = 0; x < WIDTH; x++) {
-            const spread = Math.abs(x - 3.5) + Math.abs(y - 3.5);
-            if (Math.abs(spread - radius) > 0.7) continue;
-
-            frame.add(x, y, scale(hsv(seed + radius / 14, 0.7, 1), 0.85));
-          }
-        }
-      }
-    },
-  },
-
-  {
     name: "spiral",
     duration: 2,
     spentWeight: 0,
