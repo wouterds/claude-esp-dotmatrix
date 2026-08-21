@@ -58,6 +58,45 @@ describe("deriveMood", () => {
   });
 });
 
+describe("deriveMood on a strained quota", () => {
+  it("tires on a nearly spent quota even with the window wide open", () => {
+    // given
+    const roomy = 0.1;
+
+    // when
+    const mood = deriveMood("thinking", roomy, 0.5);
+
+    // then
+    expect(mood).toBe("tired");
+  });
+
+  it("outranks the cheerful moods, since there is no runway to be excited about", () => {
+    // given
+    const cheerful = ["running", "idle", "waiting"] as const;
+
+    // when
+    const moods = cheerful.map((status) => deriveMood(status, 0.1, 0.5));
+
+    // then
+    expect(moods).toEqual(["tired", "tired", "tired"]);
+  });
+
+  it("still lets an error and a full window speak first", () => {
+    // given
+    const strained = 1;
+
+    // when
+    const [failing, spent] = [
+      deriveMood("error", 0.1, strained),
+      deriveMood("thinking", 0.96, strained),
+    ];
+
+    // then
+    expect(failing).toBe("annoyed");
+    expect(spent).toBe("dead");
+  });
+});
+
 describe("guards", () => {
   it("accept only known names", () => {
     // given

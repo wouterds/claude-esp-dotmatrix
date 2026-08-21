@@ -122,7 +122,20 @@ export const drawGauges = (frame: Frame, state: PetState, spent?: Color) => {
  * rather than the subscription's, because that is the one the pet is running out
  * of head in.
  */
-export const fatigueOf = (fill: number) => Math.max(0, Math.min(1, (fill - 0.5) / 0.5));
+const fatigueOf = (fill: number) => Math.max(0, Math.min(1, (fill - 0.5) / 0.5));
+
+/**
+ * How far into the last fifth of either quota, 0 to 1.
+ *
+ * Eighty percent because that is where the gauge's own top band starts, so the
+ * face turning and the bar turning are one threshold rather than two.
+ */
+export const strainOf = (fiveHour: number | null, sevenDay: number | null) =>
+  Math.max(0, Math.min(1, (Math.max(fiveHour ?? 0, sevenDay ?? 0) - 0.8) / 0.2));
+
+/** How worn the pet is: the worse of a full window and a nearly spent quota. */
+export const wearOf = (state: PetState) =>
+  Math.max(fatigueOf(state.fill), strainOf(state.fiveHour, state.sevenDay));
 
 // Slow on purpose. A minute and a half for the loop means the colour is never
 // obviously moving and is never twice the same either - and it is the one thing
@@ -300,14 +313,17 @@ export const STATUS_SCENE: Scene = {
       return;
     }
 
-    const fatigue = fatigueOf(state.fill);
+    const fatigue = wearOf(state);
+    const strained = strainOf(state.fiveHour, state.sevenDay) > 0;
     // Tinted rather than replaced, so the status is still legible in the colour
     // while the accent reddens.
     const accent = lerp(STATUS_COLORS[state.status], EXHAUSTED, TINT * fatigue);
-    // The face drifts on its own clock rather than taking the status colour, and
-    // takes the same fatigue tint over the top. An error keeps the red: a
-    // cheerfully green face on a failure is the one thing the drift must not say.
-    const color = state.status === "error" ? accent : lerp(driftAt(t), EXHAUSTED, TINT * fatigue);
+    // The face drifts on its own clock rather than taking the status colour - but
+    // it stops drifting once a quota is into its last fifth and holds the gauge's
+    // own top band, the same dark orange the bar has just gone. An error keeps the
+    // red: a cheerfully green face on a failure is the one thing this must not say.
+    const drifting = strained ? GAUGE_BANDS[3].color : lerp(driftAt(t), EXHAUSTED, TINT * fatigue);
+    const color = state.status === "error" ? accent : drifting;
     // The face keeps its own clock, and it drags. Blinking and looking around go
     // half speed by the time the window is gone - the accents stay on real time,
     // because a slow spinner reads as the machine lagging rather than the pet

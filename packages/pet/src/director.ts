@@ -4,10 +4,10 @@ import {
   anticNamed,
   anticWeight,
   drawAlarm,
-  fatigueOf,
   isSpent,
   type Scene,
   STATUS_SCENE,
+  wearOf,
 } from "./scenes";
 import type { PetState, Status } from "./state";
 
@@ -82,7 +82,7 @@ export const createDirector = ({
   };
 
   const paint: Director["paint"] = (frame, now, state) => {
-    const fatigue = fatigueOf(state.fill);
+    const fatigue = wearOf(state);
 
     if (nextAt === null) schedule(now, fatigue);
 

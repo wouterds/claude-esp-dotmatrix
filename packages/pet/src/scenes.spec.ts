@@ -1,5 +1,6 @@
 import { createFrame, HEIGHT, WIDTH } from "@claude-status/matrix";
 import { describe, expect, it } from "vitest";
+import { GAUGE_BANDS } from "./palette";
 import {
   ANTICS,
   anticNamed,
@@ -10,6 +11,7 @@ import {
   FIVE_HOUR_ROW,
   SIGNALS,
   STATUS_SCENE,
+  strainOf,
   WEEKLY_ROW,
 } from "./scenes";
 import { deriveMood, type PetState, STATUSES } from "./state";
@@ -287,6 +289,101 @@ describe("STATUS_SCENE", () => {
 
     // then
     expect(duration).toBeNull();
+  });
+});
+
+describe("strainOf", () => {
+  it("stays at nothing until a quota is four fifths gone", () => {
+    // given - eighty percent is where the gauge's own top band starts.
+    const below = [0, 0.5, 0.79, 0.8];
+
+    // when
+    const strains = below.map((used) => strainOf(used, 0));
+
+    // then
+    expect(strains).toEqual([0, 0, 0, 0]);
+  });
+
+  it("ramps across the last fifth and takes the worse of the two", () => {
+    // given
+    const cases = [
+      [0.9, 0],
+      [0, 0.9],
+      [1, 0],
+    ] as const;
+
+    // when
+    const strains = cases.map(([five, week]) => strainOf(five, week));
+
+    // then
+    expect(strains[0]).toBeCloseTo(0.5);
+    expect(strains[1]).toBeCloseTo(0.5);
+    expect(strains[2]).toBeCloseTo(1);
+  });
+
+  it("reads an unknown quota as no strain rather than as full", () => {
+    // given
+    const unknown = null;
+
+    // when
+    const strain = strainOf(unknown, unknown);
+
+    // then
+    expect(strain).toBe(0);
+  });
+});
+
+describe("a quota into its last fifth", () => {
+  const at = (fiveHour: number): PetState => ({
+    ...stateAt(0.2, "thinking"),
+    fiveHour,
+    sevenDay: 0.1,
+  });
+
+  // The face breathes, so the same colour arrives at different brightnesses.
+  // Hue is what the drift changes, so hue is what these compare.
+  const hueAt = (state: PetState, t: number) => {
+    const frame = createFrame();
+    STATUS_SCENE.paint(frame, t, state);
+    const [red, green, blue] = frame.get(1, 3);
+
+    return [green / red, blue / red];
+  };
+
+  it("stops the face drifting and holds one colour", () => {
+    // given
+    const strained = at(0.9);
+
+    // when - two moments a long way apart, so a drifting face would have moved
+    const [early, later] = [hueAt(strained, 0), hueAt(strained, 45)];
+
+    // then
+    expect(early[0]).toBeCloseTo(later[0], 2);
+    expect(early[1]).toBeCloseTo(later[1], 2);
+  });
+
+  it("holds the gauge's own top band, the colour the bar has just gone", () => {
+    // given
+    const strained = at(0.9);
+    const [bandRed, bandGreen, bandBlue] = GAUGE_BANDS[3].color;
+
+    // when
+    const [green, blue] = hueAt(strained, 0);
+
+    // then
+    expect(green).toBeCloseTo(bandGreen / bandRed, 2);
+    expect(blue).toBeCloseTo(bandBlue / bandRed, 2);
+  });
+
+  it("keeps drifting while both quotas still have room", () => {
+    // given
+    const roomy = at(0.5);
+
+    // when
+    const [early, later] = [hueAt(roomy, 0), hueAt(roomy, 45)];
+
+    // then
+    expect(early[0]).not.toBeCloseTo(later[0], 2);
   });
 });
 

@@ -43,11 +43,14 @@ export const isMood = (value: string): value is Mood => MOODS.includes(value as 
 // how much room is left rather than from what the session is doing. A model
 // four fifths of the way through its context is genuinely running out of head,
 // and that is the thing worth showing on a face.
-export const deriveMood = (status: Status, fill: number): Mood => {
+export const deriveMood = (status: Status, fill: number, strain = 0): Mood => {
   if (status === "error") return "annoyed";
   if (fill >= 0.95) return "dead";
   if (status === "done") return "happy";
-  if (fill >= 0.75) return "tired";
+  // A quota near gone is as good a reason to be tired as a full window, and it
+  // outranks the cheerful moods below - there is no being excited about a
+  // session that is nearly out of runway.
+  if (fill >= 0.75 || strain > 0) return "tired";
   if (status === "idle" || status === "waiting") return "zen";
   if (status === "running") return "excited";
 
