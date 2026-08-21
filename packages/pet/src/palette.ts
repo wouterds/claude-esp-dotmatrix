@@ -41,3 +41,7 @@ export const EXHAUSTED = hex("#c26230");
 
 export const WHITE = hex("#ffffff");
 export const PINK = hex("#ff5f8f");
+
+// Pink-purple. Sits between the laser's pink and the running violet, which is
+// what makes it read as its own colour rather than as either of them.
+export const VIOLET = hex("#c264e0");

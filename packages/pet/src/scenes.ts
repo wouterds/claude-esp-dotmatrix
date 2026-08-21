@@ -11,7 +11,7 @@ import {
   INVADER,
   mirrored,
 } from "./glyphs";
-import { EXHAUSTED, GAUGE_BANDS, PINK, STATUS_COLORS, WHITE } from "./palette";
+import { EXHAUSTED, GAUGE_BANDS, PINK, STATUS_COLORS, VIOLET, WHITE } from "./palette";
 import type { PetState, Status } from "./state";
 
 const TAU = Math.PI * 2;
@@ -482,7 +482,7 @@ export const ANTICS: readonly Scene[] = [
   // Claude's own mark, so it comes round oftener than the rest.
   { ...glyphScene("burst", BURST, STATUS_COLORS.idle, 1.8), weight: 3, spentWeight: 0 },
   { ...glyphScene("bolt", BOLT, STATUS_COLORS.waiting, 1.4), spentWeight: 0 },
-  { ...glyphScene("invader", INVADER, STATUS_COLORS.done, 1.8), spentWeight: 0 },
+  { ...glyphScene("invader", INVADER, VIOLET, 1.8), spentWeight: 0 },
   {
     name: "ghost",
     duration: 3,
