@@ -6,12 +6,10 @@ import {
   CHECK,
   CROSS,
   drawGlyph,
-  EXCLAIM,
   GHOST,
   type Glyph,
   INVADER,
   mirrored,
-  QUESTION,
   SKULL,
   SPARKLE,
 } from "./glyphs";
@@ -567,8 +565,6 @@ export const ANTICS: readonly Scene[] = [
       drawGlyph(frame, facing, scale(WHITE, 0.35 + 0.65 * pulse(t, 0.5)));
     },
   },
-  { ...glyphScene("exclaim", EXCLAIM, STATUS_COLORS.waiting, 1.2), spentWeight: 1 },
-  { ...glyphScene("question", QUESTION, STATUS_COLORS.thinking, 1.6), spentWeight: 1 },
   // These two belong to a session running out of room, so they get commoner as it
   // does rather than draining away with the playful ones.
   { ...glyphScene("skull", SKULL, STATUS_COLORS.error, 1.8), weight: 0.3, spentWeight: 3 },
