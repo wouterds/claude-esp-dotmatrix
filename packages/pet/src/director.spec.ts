@@ -186,7 +186,7 @@ describe("createDirector", () => {
     // given
     const pet = director(600);
     const play = (at: number) => {
-      pet.play("sparkle", at);
+      pet.play("twinkle", at);
 
       const frame = createFrame();
       pet.paint(frame, at + 0.5, state());
@@ -206,12 +206,12 @@ describe("createDirector", () => {
     const pet = director(600);
 
     // when
-    const played = pet.play("sparkle", 0);
+    const played = pet.play("twinkle", 0);
     pet.paint(createFrame(), 0, state());
 
     // then
     expect(played).toBe(true);
-    expect(pet.playing()).toBe("sparkle");
+    expect(pet.playing()).toBe("twinkle");
   });
 
   it("reports an unknown name rather than guessing", () => {

@@ -619,13 +619,13 @@ describe("anticWeight", () => {
 describe("anticNamed", () => {
   it("finds one by name and returns null for anything else", () => {
     // given
-    const names = ["sparkle", "floss"];
+    const names = ["twinkle", "floss"];
 
     // when
     const [known, unknown] = names.map(anticNamed);
 
     // then
-    expect(known?.name).toBe("sparkle");
+    expect(known?.name).toBe("twinkle");
     expect(unknown).toBeNull();
   });
 });

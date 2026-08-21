@@ -10,7 +10,6 @@ import {
   type Glyph,
   INVADER,
   mirrored,
-  SPARKLE,
 } from "./glyphs";
 import { EXHAUSTED, GAUGE_BANDS, PINK, STATUS_COLORS, WHITE } from "./palette";
 import type { PetState, Status } from "./state";
@@ -480,7 +479,6 @@ export const ANTICS: readonly Scene[] = [
 
   { ...glyphScene("burst", BURST, STATUS_COLORS.idle, 1.8), spentWeight: 0 },
   { ...glyphScene("bolt", BOLT, STATUS_COLORS.waiting, 1.4), spentWeight: 0 },
-  { ...glyphScene("sparkle", SPARKLE, STATUS_COLORS.thinking, 1.6), spentWeight: 0.5 },
   { ...glyphScene("invader", INVADER, STATUS_COLORS.done, 1.8), spentWeight: 0 },
   {
     name: "ghost",

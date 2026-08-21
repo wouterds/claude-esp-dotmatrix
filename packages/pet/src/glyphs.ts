@@ -39,17 +39,6 @@ export const CROSS: Glyph = [
   "##....##",
 ];
 
-export const SPARKLE: Glyph = [
-  "...##...",
-  "...##...",
-  "#..##..#",
-  "########",
-  "########",
-  "#..##..#",
-  "...##...",
-  "...##...",
-];
-
 // Claude's mark, as close as eight rays get on a panel this size.
 export const BURST: Glyph = [
   "#..##..#",
