@@ -1,16 +1,6 @@
 import { type Color, type Frame, HEIGHT, hsv, lerp, scale, WIDTH } from "@claude-status/matrix";
 import { drawFace } from "./faces";
-import {
-  BOLT,
-  BURST,
-  CHECK,
-  CROSS,
-  drawGlyph,
-  GHOST,
-  type Glyph,
-  INVADER,
-  mirrored,
-} from "./glyphs";
+import { BOLT, BURST, CROSS, drawGlyph, GHOST, type Glyph, INVADER, mirrored } from "./glyphs";
 import { EXHAUSTED, GAUGE_BANDS, PINK, STATUS_COLORS, VIOLET, WHITE } from "./palette";
 import type { PetState, Status } from "./state";
 
@@ -514,11 +504,7 @@ const SWITCH_HEADS = 3;
 const SWITCH_SPACING = 3.2;
 const SWITCH_DEPTH = 2;
 
-// Out of the random pool and triggered instead: the check is what `done` plays
-// on arrival, and a tick turning up unprompted reads as something having
-// finished when nothing has.
 export const SIGNALS: readonly Scene[] = [
-  glyphScene("check", CHECK, STATUS_COLORS.done, 1.6),
   {
     name: "switch",
     duration: SWITCH_DURATION,

@@ -17,17 +17,6 @@ export const drawGlyph = (frame: Frame, glyph: Glyph, color: Color, dx = 0, dy =
   }
 };
 
-export const CHECK: Glyph = [
-  "........",
-  "......##",
-  ".....##.",
-  "....##..",
-  "#..##...",
-  "##.##...",
-  ".###....",
-  "..#.....",
-];
-
 export const CROSS: Glyph = [
   "##....##",
   "###..###",

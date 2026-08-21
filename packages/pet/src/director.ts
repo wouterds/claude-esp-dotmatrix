@@ -31,10 +31,6 @@ const NO_INTERRUPTIONS: readonly Status[] = ["error"];
 
 // Punctuation on arriving at a status, rather than something to wait 40 seconds
 // for. Finishing is worth a tick the moment it happens.
-const ARRIVALS: Partial<Record<Status, string>> = {
-  done: "check",
-};
-
 export type DirectorOptions = {
   interval?: number;
   random?: () => number;
@@ -96,11 +92,9 @@ export const createDirector = ({
     const blocked = NO_INTERRUPTIONS.includes(state.status) || isSpent(state);
 
     if (state.status !== lastStatus) {
-      const arrival = ARRIVALS[state.status];
       lastStatus = state.status;
 
       if (blocked) active = null;
-      else if (arrival) start(anticNamed(arrival) ?? STATUS_SCENE, now, fatigue);
     }
 
     if (active && now - active.startedAt >= (active.scene.duration ?? Number.POSITIVE_INFINITY)) {

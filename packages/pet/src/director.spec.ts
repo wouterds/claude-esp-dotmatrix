@@ -138,30 +138,6 @@ describe("createDirector", () => {
     expect(pet.playing()).toBe("status");
   });
 
-  it("ticks on arriving at done, rather than waiting for the next antic", () => {
-    // given
-    const pet = director(600);
-    pet.paint(createFrame(), 0, state());
-
-    // when
-    pet.paint(createFrame(), 1, state("done"));
-
-    // then
-    expect(pet.playing()).toBe("check");
-  });
-
-  it("only celebrates the arrival, not every frame of it", () => {
-    // given
-    const pet = director(600);
-    pet.paint(createFrame(), 0, state("done"));
-
-    // when
-    pet.paint(createFrame(), 30, state("done"));
-
-    // then
-    expect(pet.playing()).toBe("status");
-  });
-
   it("turns a mirroring scene round each time it plays", () => {
     // given
     const pet = director(600);

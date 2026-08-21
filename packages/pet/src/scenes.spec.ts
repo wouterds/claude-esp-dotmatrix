@@ -544,9 +544,6 @@ describe("ANTICS", () => {
 describe("anticWeight", () => {
   const named = (name: string) => ANTICS.find((antic) => antic.name === name)!;
 
-  const commonest = (fatigue: number) =>
-    [...ANTICS].sort((a, b) => anticWeight(b, fatigue) - anticWeight(a, fatigue))[0].name;
-
   it("drains the energetic scenes out of the pool as the window fills", () => {
     // given
     const energetic = ["dance", "spin", "wave", "rainbow", "bolt", "burst"];
