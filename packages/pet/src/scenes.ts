@@ -366,30 +366,6 @@ const PLAYFUL: readonly Scene[] = [
   },
 
   {
-    name: "firework",
-    duration: 1.8,
-    spentWeight: 0,
-    paint: (frame, t, _state, seed = 0) => {
-      const progress = sawtooth(t, 1.8);
-
-      // Two shells, the second a beat behind, both fading as they go out.
-      for (const shell of [0, 0.35]) {
-        const phase = progress - shell;
-        if (phase <= 0) continue;
-
-        for (let y = 0; y < HEIGHT; y++) {
-          for (let x = 0; x < WIDTH; x++) {
-            const spread = Math.abs(x - 3.5) + Math.abs(y - 3.5);
-            if (Math.abs(spread - phase * 7) > 0.9) continue;
-
-            frame.add(x, y, scale(hsv(seed + shell, 0.85, 1), (1 - phase) * 0.95));
-          }
-        }
-      }
-    },
-  },
-
-  {
     name: "rain",
     duration: 2.6,
     spentWeight: 0,
