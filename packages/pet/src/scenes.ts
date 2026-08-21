@@ -1,7 +1,7 @@
 import { type Color, type Frame, HEIGHT, hsv, lerp, scale, WIDTH } from "@claude-status/matrix";
 import { drawFace } from "./faces";
 import { BOLT, BURST, CROSS, drawGlyph, GHOST, type Glyph, INVADER, mirrored } from "./glyphs";
-import { EXHAUSTED, GAUGE_BANDS, PINK, STATUS_COLORS, VIOLET, WHITE } from "./palette";
+import { DRIFT, EXHAUSTED, GAUGE_BANDS, PINK, STATUS_COLORS, VIOLET, WHITE } from "./palette";
 import type { PetState, Status } from "./state";
 
 const TAU = Math.PI * 2;
@@ -123,6 +123,19 @@ export const drawGauges = (frame: Frame, state: PetState, spent?: Color) => {
  * of head in.
  */
 export const fatigueOf = (fill: number) => Math.max(0, Math.min(1, (fill - 0.5) / 0.5));
+
+// Slow on purpose. A minute and a half for the loop means the colour is never
+// obviously moving and is never twice the same either - and it is the one thing
+// on the panel that is decoration rather than information.
+const DRIFT_PERIOD = 90;
+
+/** Where the drift has got to, looping through the stops. */
+const driftAt = (t: number): Color => {
+  const phase = ((t % DRIFT_PERIOD) / DRIFT_PERIOD) * DRIFT.length;
+  const index = Math.floor(phase);
+
+  return lerp(DRIFT[index], DRIFT[(index + 1) % DRIFT.length], phase - index);
+};
 
 // Partway to red, which lands a blue status on a muted rose rather than an alarm.
 // Judged on the panel: 0.85 was harsher than it needed to be, and the eyes and
@@ -289,8 +302,12 @@ export const STATUS_SCENE: Scene = {
 
     const fatigue = fatigueOf(state.fill);
     // Tinted rather than replaced, so the status is still legible in the colour
-    // while the face reddens.
-    const color = lerp(STATUS_COLORS[state.status], EXHAUSTED, TINT * fatigue);
+    // while the accent reddens.
+    const accent = lerp(STATUS_COLORS[state.status], EXHAUSTED, TINT * fatigue);
+    // The face drifts on its own clock rather than taking the status colour, and
+    // takes the same fatigue tint over the top. An error keeps the red: a
+    // cheerfully green face on a failure is the one thing the drift must not say.
+    const color = state.status === "error" ? accent : lerp(driftAt(t), EXHAUSTED, TINT * fatigue);
     // The face keeps its own clock, and it drags. Blinking and looking around go
     // half speed by the time the window is gone - the accents stay on real time,
     // because a slow spinner reads as the machine lagging rather than the pet
@@ -306,7 +323,7 @@ export const STATUS_SCENE: Scene = {
     // edge, and drawing it underneath would make it vanish behind a full bar.
     drawGauges(frame, state);
 
-    ACCENTS[state.status]?.(frame, t, color);
+    ACCENTS[state.status]?.(frame, t, accent);
   },
 };
 

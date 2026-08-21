@@ -45,3 +45,19 @@ export const PINK = hex("#ff5f8f");
 // Pink-purple. Sits between the laser's pink and the running violet, which is
 // what makes it read as its own colour rather than as either of them.
 export const VIOLET = hex("#c264e0");
+
+/**
+ * What the face drifts through, looping. Five stops rather than a full rainbow:
+ * the panel has sixteen levels per channel, so hues that sit close together
+ * arrive as the same colour and the drift reads as a flicker instead.
+ *
+ * The status is no longer in the face because of this - it is in the accent,
+ * which is where it stays legible.
+ */
+export const DRIFT: readonly Color[] = [
+  hex("#5fc97e"),
+  hex("#7c9cf5"),
+  hex("#b57edc"),
+  hex("#ff5f8f"),
+  hex("#e8c547"),
+];
