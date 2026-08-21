@@ -75,7 +75,7 @@ describe("drawFace", () => {
     expect(blinked.toBytes()).not.toEqual(open.toBytes());
   });
 
-  it("a gaze moves the eyes and leaves the mouth put", () => {
+  it("a gaze moves the eyes", () => {
     // given
     const ahead = createFrame();
     const aside = createFrame();
@@ -86,7 +86,6 @@ describe("drawFace", () => {
 
     // then
     expect(aside.get(1, 2)).toEqual(ahead.get(0, 2));
-    expect(aside.get(3, 6)).toEqual(ahead.get(3, 6));
   });
 
   it("looks up and down as well as sideways", () => {
@@ -100,24 +99,5 @@ describe("drawFace", () => {
 
     // then
     expect(up.get(0, 1)).toEqual(ahead.get(0, 2));
-  });
-
-  it("never lets a gaze disturb the mouth itself", () => {
-    // given - a sideways look does cross into the mouth's two columns; what keeps
-    // them apart is the rows, not the columns, which is worth pinning down
-    // because the eye shapes have blank centres and it looks like they never
-    // could.
-    const still = createFrame();
-    drawFace(still, "focused", white);
-
-    // when / then - the sweep is the action, so it carries its own assertion
-    for (const gaze of GAZES) {
-      const frame = createFrame();
-      drawFace(frame, "focused", white, { gaze });
-
-      for (const x of [3, 4]) {
-        expect(frame.get(x, 6), `mouth at x=${x}, gaze=${gaze}`).toEqual(still.get(x, 6));
-      }
-    }
   });
 });

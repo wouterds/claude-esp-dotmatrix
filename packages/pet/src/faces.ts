@@ -1,10 +1,9 @@
 import type { Color, Frame } from "@claude-status/matrix";
-import { scale } from "@claude-status/matrix";
 import { drawGlyph, type Glyph } from "./glyphs";
 import type { Mood } from "./state";
 
-// Row 7 is the context gauge and row 0 is left to the spinner, so the face has
-// rows 1 to 6: eyes on 2 to 4 and a two pixel mouth on 6.
+// The two edge rows are quota bars, so the face has rows 1 to 6 and the eyes
+// sit on 2 to 4.
 //
 // The eyes sit a row down from the top on purpose. Looking up shifts them by one,
 // and from row 1 that puts pixels on row 0 - where two lit corners read as stray
@@ -14,9 +13,6 @@ import type { Mood } from "./state";
 // low, because the two bars are not part of the face but the eye still reads the
 // panel's centre as its own.
 const FACE_ROW = 2;
-const MOUTH_ROW = 6;
-
-// Dead is the one mood with no business looking around.
 
 // One motif: the cross, and halves of it. No hollow diamonds - an outlined
 // diamond reads as a round eye, which is the opposite of the point.
@@ -44,9 +40,9 @@ const EYES: Record<Mood, Glyph> = {
   // arrow tips, so at x=0 and x=7 a sideways glance clipped one arrow away
   // entirely rather than trimming an edge off it.
   annoyed: [".#....#.", "..#..#..", ".#....#."],
-  // Both arrows the same way, and no mouth with them. It reads as dazed where
-  // annoyed's `> <` reads as cross, and the two cannot be confused because no
-  // other mood turns both eyes in one direction.
+  // Both arrows the same way. It reads as dazed where annoyed's `> <` reads as
+  // cross, and the two cannot be confused because no other mood turns both eyes
+  // in one direction.
   //
   // This was one single-pixel cross over the whole face. At eight by eight that
   // is not a face giving out, it is a full screen X - which reads as an error
@@ -60,13 +56,6 @@ const EYES: Record<Mood, Glyph> = {
 // does not read as the face dropping out for a frame.
 const LID: Glyph = ["........", "###..###"];
 
-// Two pixels. Dimmer than the eyes, and that is the whole mouth - the mood lives
-// in the eyes, so anything wider starts competing with them and anything that
-// curves reads as a smiley pasted onto a readout.
-const MOUTH: Glyph = ["...##..."];
-
-const MOUTHLESS: readonly Mood[] = ["dead"];
-
 // The right eye replaced by a lid, the left left alone. Built from whatever the
 // mood's eyes are rather than being its own sprite, so a wink works on every face
 // and stays in step if the shapes change.
@@ -78,8 +67,7 @@ export type FaceOptions = {
   blink?: boolean;
   /**
    * Where the eyes are looking, as a pixel offset. Any of the eight directions
-   * and centre; the mouth stays put, which is what makes it read as a glance
-   * rather than as the whole head turning.
+   * and centre - a glance rather than the whole head turning.
    */
   gaze?: readonly [number, number];
   /** Shifts the whole face, for a bob. */
@@ -94,15 +82,10 @@ export const drawFace = (
   color: Color,
   { blink = false, gaze = [0, 0], bob = 0, wink = false }: FaceOptions = {},
 ) => {
+  // Dead is the one mood with no business looking around.
   const [dx, dy] = mood === "dead" && !blink ? [0, 0] : gaze;
 
   const eyes = blink ? LID : EYES[mood];
 
   drawGlyph(frame, wink ? winking(eyes) : eyes, color, dx, FACE_ROW + bob + dy);
-
-  // Drawn after the eyes and never moved, so however far they look the mouth is
-  // untouched. They do cross into its two columns, but rows apart from it.
-  if (!MOUTHLESS.includes(mood)) {
-    drawGlyph(frame, MOUTH, scale(color, 0.55), 0, MOUTH_ROW + bob);
-  }
 };

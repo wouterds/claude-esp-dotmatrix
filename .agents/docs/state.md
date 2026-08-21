@@ -167,6 +167,9 @@ worked out by looking at the panel, not reasoned about, so it is recorded here:
 | arrows turned inwards `> <` | **angry** | annoyed only |
 | arrows turned the same way `> >` | **dazed** | dead only |
 
+There is no mouth. Two pixels at this size carried no expression the eyes were
+not already carrying, and dropping it gave the face back a row.
+
 Two shapes were tried and rejected, and both are worth recording because they read
 as reasonable written down. The **top half of a cross** (`v v`) is a scowl, not
 fatigue. **One pixel per eye** is a fault light, not a sleepy face.
