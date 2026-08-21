@@ -1,8 +1,8 @@
 import { createFrame, HEIGHT, WIDTH } from "@claude-status/matrix";
 import { describe, expect, it } from "vitest";
-import { BOLT, BURST, CHECK, CROSS, drawGlyph, HEART, SPARKLE } from "./glyphs";
+import { BOLT, BURST, CHECK, CROSS, drawGlyph, SPARKLE } from "./glyphs";
 
-const ATLAS = { HEART, CHECK, CROSS, SPARKLE, BURST, BOLT };
+const ATLAS = { CHECK, CROSS, SPARKLE, BURST, BOLT };
 
 describe("the atlas", () => {
   it("is eight by eight throughout, so nothing is silently clipped", () => {

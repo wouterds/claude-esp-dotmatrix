@@ -17,20 +17,6 @@ export const drawGlyph = (frame: Frame, glyph: Glyph, color: Color, dx = 0, dy =
   }
 };
 
-// Sat on the bottom row rather than the top. Its blank row has to go somewhere,
-// and a heart hanging off the top edge reads as clipped where one resting on the
-// bottom reads as placed.
-export const HEART: Glyph = [
-  "........",
-  ".##..##.",
-  "########",
-  "########",
-  "########",
-  ".######.",
-  "..####..",
-  "...##...",
-];
-
 export const CHECK: Glyph = [
   "........",
   "......##",

@@ -544,12 +544,6 @@ describe("ANTICS", () => {
 describe("anticWeight", () => {
   const named = (name: string) => ANTICS.find((antic) => antic.name === name)!;
 
-  const shareOf = (name: string, fatigue: number) => {
-    const total = ANTICS.reduce((sum, antic) => sum + anticWeight(antic, fatigue), 0);
-
-    return anticWeight(named(name), fatigue) / total;
-  };
-
   const commonest = (fatigue: number) =>
     [...ANTICS].sort((a, b) => anticWeight(b, fatigue) - anticWeight(a, fatigue))[0].name;
 
@@ -596,8 +590,7 @@ describe("anticWeight", () => {
   });
 
   it("makes the ghost the likeliest while there is room", () => {
-    // given - the heart held this spot and was dialled back for coming round too
-    // often. Which one leads matters less than that it is not a grim one.
+    // given - which one leads matters less than that it is not a grim one.
     const fresh = 0;
 
     // when
@@ -628,17 +621,6 @@ describe("anticWeight", () => {
     // then
     expect(whenFresh).toBeLessThan(0.05);
     expect(whenSpent).toBeGreaterThan(whenFresh * 10);
-  });
-
-  it("keeps hearts commoner with room than without", () => {
-    // given
-    const heart = "heart";
-
-    // when
-    const [whenSpent, whenFresh] = [shareOf(heart, 1), shareOf(heart, 0)];
-
-    // then
-    expect(whenSpent).toBeLessThan(whenFresh);
   });
 
   it("never goes negative, whatever the fatigue", () => {
@@ -673,13 +655,13 @@ describe("anticWeight", () => {
 describe("anticNamed", () => {
   it("finds one by name and returns null for anything else", () => {
     // given
-    const names = ["heart", "floss"];
+    const names = ["sparkle", "floss"];
 
     // when
     const [known, unknown] = names.map(anticNamed);
 
     // then
-    expect(known?.name).toBe("heart");
+    expect(known?.name).toBe("sparkle");
     expect(unknown).toBeNull();
   });
 });

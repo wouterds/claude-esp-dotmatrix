@@ -8,7 +8,7 @@ import {
   drawGlyph,
   EXCLAIM,
   GHOST,
-  HEART,
+  type Glyph,
   INVADER,
   mirrored,
   QUESTION,
@@ -328,7 +328,7 @@ export const STATUS_SCENE: Scene = {
 // than as flickering.
 const GHOST_TURN = 0.6;
 
-const glyphScene = (name: string, glyph: typeof HEART, color: Color, duration: number): Scene => ({
+const glyphScene = (name: string, glyph: Glyph, color: Color, duration: number): Scene => ({
   name,
   duration,
   paint: (frame, t) => {
@@ -550,7 +550,6 @@ export const ANTICS: readonly Scene[] = [
     },
   },
 
-  { ...glyphScene("heart", HEART, PINK, 1.8), weight: 2, spentWeight: 0.5 },
   { ...glyphScene("burst", BURST, STATUS_COLORS.idle, 1.8), spentWeight: 0 },
   { ...glyphScene("bolt", BOLT, STATUS_COLORS.waiting, 1.4), spentWeight: 0 },
   { ...glyphScene("sparkle", SPARKLE, STATUS_COLORS.thinking, 1.6), spentWeight: 0.5 },

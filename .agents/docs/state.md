@@ -210,7 +210,7 @@ once rather than picking one:
 
 The antic weights are interpolated rather than switched at a threshold, so the pet
 winds down instead of changing character in one step. A fresh session is mostly
-ghosts and hearts; a spent one is mostly the skull, rarely.
+ghosts and sparkles; a spent one is mostly the skull, rarely.
 
 Tinted rather than replaced, so the status is still legible in the colour while the
 face reddens. And only the *face* slows - the accents keep real time, because a
