@@ -10,7 +10,6 @@ import {
   type Glyph,
   INVADER,
   mirrored,
-  SKULL,
   SPARKLE,
 } from "./glyphs";
 import { EXHAUSTED, GAUGE_BANDS, PINK, STATUS_COLORS, WHITE } from "./palette";
@@ -498,7 +497,6 @@ export const ANTICS: readonly Scene[] = [
   },
   // These two belong to a session running out of room, so they get commoner as it
   // does rather than draining away with the playful ones.
-  { ...glyphScene("skull", SKULL, STATUS_COLORS.error, 1.8), weight: 0.3, spentWeight: 3 },
   // Rare while there is room and the commonest thing once there is not.
   ...PLAYFUL,
 ];

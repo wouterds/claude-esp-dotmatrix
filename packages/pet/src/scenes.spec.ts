@@ -565,19 +565,6 @@ describe("anticWeight", () => {
     }
   });
 
-  it("makes the skull the likeliest single antic once there is no room left", () => {
-    // given - asserted against the other antics rather than as a percentage. A
-    // share depends on how many antics exist, so adding one used to break these.
-    // The cross used to hold this spot and is now reserved for a spent quota.
-    const spent = 1;
-
-    // when
-    const likeliest = commonest(spent);
-
-    // then
-    expect(likeliest).toBe("skull");
-  });
-
   it("keeps the cross out of the pool entirely, since it now means one thing", () => {
     // given
     const pool = ANTICS.map((antic) => antic.name);
@@ -598,29 +585,6 @@ describe("anticWeight", () => {
 
     // then
     expect(likeliest).toBe("ghost");
-  });
-
-  it("hands the pool over to the grim ones as the window empties", () => {
-    // given - the skull is what is left of the grim end now the cross is spoken
-    // for, so this is about the share climbing rather than about a fixed figure.
-    const grim = ["skull"];
-    const shareOfGrim = (fatigue: number) => {
-      const total = ANTICS.reduce((sum, antic) => sum + anticWeight(antic, fatigue), 0);
-
-      return (
-        ANTICS.filter((antic) => grim.includes(antic.name)).reduce(
-          (sum, antic) => sum + anticWeight(antic, fatigue),
-          0,
-        ) / total
-      );
-    };
-
-    // when
-    const [whenFresh, whenSpent] = [shareOfGrim(0), shareOfGrim(1)];
-
-    // then
-    expect(whenFresh).toBeLessThan(0.05);
-    expect(whenSpent).toBeGreaterThan(whenFresh * 10);
   });
 
   it("never goes negative, whatever the fatigue", () => {
