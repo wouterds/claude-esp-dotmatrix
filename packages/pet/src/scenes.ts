@@ -553,7 +553,6 @@ export const ANTICS: readonly Scene[] = [
   { ...glyphScene("burst", BURST, STATUS_COLORS.idle, 1.8), spentWeight: 0 },
   { ...glyphScene("bolt", BOLT, STATUS_COLORS.waiting, 1.4), spentWeight: 0 },
   { ...glyphScene("sparkle", SPARKLE, STATUS_COLORS.thinking, 1.6), spentWeight: 0.5 },
-  { ...glyphScene("check", CHECK, STATUS_COLORS.done, 1.6), spentWeight: 0.5 },
   { ...glyphScene("invader", INVADER, STATUS_COLORS.done, 1.8), spentWeight: 0 },
   {
     name: "ghost",
@@ -589,7 +588,11 @@ const SWITCH_HEADS = 3;
 const SWITCH_SPACING = 3.2;
 const SWITCH_DEPTH = 2;
 
+// Out of the random pool and triggered instead: the check is what `done` plays
+// on arrival, and a tick turning up unprompted reads as something having
+// finished when nothing has.
 export const SIGNALS: readonly Scene[] = [
+  glyphScene("check", CHECK, STATUS_COLORS.done, 1.6),
   {
     name: "switch",
     duration: SWITCH_DURATION,
