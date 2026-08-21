@@ -504,7 +504,11 @@ const SWITCH_HEADS = 3;
 const SWITCH_SPACING = 3.2;
 const SWITCH_DEPTH = 2;
 
+// Never picked at random - a signal is played because something happened. The
+// cross is here so a spent quota can be looked at on demand rather than only
+// when a window actually runs out.
 export const SIGNALS: readonly Scene[] = [
+  glyphScene("cross", CROSS, STATUS_COLORS.error, 1.4),
   {
     name: "switch",
     duration: SWITCH_DURATION,
