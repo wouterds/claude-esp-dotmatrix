@@ -137,10 +137,11 @@ export const strainOf = (fiveHour: number | null, sevenDay: number | null) =>
 export const wearOf = (state: PetState) =>
   Math.max(fatigueOf(state.fill), strainOf(state.fiveHour, state.sevenDay));
 
-// Slow on purpose. A minute and a half for the loop means the colour is never
-// obviously moving and is never twice the same either - and it is the one thing
-// on the panel that is decoration rather than information.
-const DRIFT_PERIOD = 90;
+// Six minutes for the loop, so a minute and a bit on each leg between stops. At
+// ninety seconds it read as cycling: you could watch it move, which made it the
+// busiest thing on a panel where it is the only part that is decoration rather
+// than information. This slow it only shows when you look back.
+const DRIFT_PERIOD = 360;
 
 /** Where the drift has got to, looping through the stops. */
 const driftAt = (t: number): Color => {
