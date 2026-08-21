@@ -406,29 +406,6 @@ const PLAYFUL: readonly Scene[] = [
   },
 
   {
-    name: "spiral",
-    duration: 2,
-    spentWeight: 0,
-    paint: (frame, t, _state, seed = 0) => {
-      // Sampled well past the pixel count. At sixteen the rounding left gaps and
-      // it read as scattered dots rather than as one curve.
-      const arm = 40;
-
-      for (let i = 0; i < arm; i++) {
-        const along = i / arm;
-        const angle = t * 6 + along * TAU * 1.6;
-        const radius = along * 3.6;
-
-        frame.add(
-          Math.round(3.5 + radius * Math.cos(angle)),
-          Math.round(3.5 + radius * Math.sin(angle)),
-          scale(hsv(seed + along * 0.3, 0.8, 1), 0.95 - along * 0.5),
-        );
-      }
-    },
-  },
-
-  {
     name: "wink",
     duration: 1.4,
     spentWeight: 0.5,
