@@ -381,6 +381,7 @@ const PLAYFUL: readonly Scene[] = [
 
   {
     name: "wink",
+    weight: 3,
     duration: 1.4,
     spentWeight: 0.5,
     paint: (frame, t, state) => {
@@ -393,6 +394,7 @@ const PLAYFUL: readonly Scene[] = [
 
   {
     name: "dart",
+    weight: 3,
     duration: 1.3,
     spentWeight: 0.5,
     paint: (frame, t, state) => {
@@ -477,7 +479,8 @@ export const ANTICS: readonly Scene[] = [
     },
   },
 
-  { ...glyphScene("burst", BURST, STATUS_COLORS.idle, 1.8), spentWeight: 0 },
+  // Claude's own mark, so it comes round oftener than the rest.
+  { ...glyphScene("burst", BURST, STATUS_COLORS.idle, 1.8), weight: 3, spentWeight: 0 },
   { ...glyphScene("bolt", BOLT, STATUS_COLORS.waiting, 1.4), spentWeight: 0 },
   { ...glyphScene("invader", INVADER, STATUS_COLORS.done, 1.8), spentWeight: 0 },
   {

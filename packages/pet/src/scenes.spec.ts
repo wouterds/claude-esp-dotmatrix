@@ -576,15 +576,21 @@ describe("anticWeight", () => {
     expect(found).toBe(false);
   });
 
-  it("makes the ghost the likeliest while there is room", () => {
-    // given - which one leads matters less than that it is not a grim one.
-    const fresh = 0;
+  it("gives the favoured few a bigger share than everything else", () => {
+    // given - these are weighted up on purpose; the rest sit at the baseline.
+    // Which of them leads does not matter, only that they lead.
+    const favoured = ["ghost", "burst", "dart", "wink"];
 
     // when
-    const likeliest = commonest(fresh);
+    const weights = ANTICS.map((antic) => ({ name: antic.name, weight: anticWeight(antic, 0) }));
 
     // then
-    expect(likeliest).toBe("ghost");
+    const baseline = Math.max(
+      ...weights.filter((w) => !favoured.includes(w.name)).map((w) => w.weight),
+    );
+    for (const name of favoured) {
+      expect(weights.find((w) => w.name === name)?.weight, name).toBeGreaterThan(baseline);
+    }
   });
 
   it("never goes negative, whatever the fatigue", () => {
