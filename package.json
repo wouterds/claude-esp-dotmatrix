@@ -23,7 +23,7 @@
     "@commitlint/cli": "^21.2.2",
     "@commitlint/config-conventional": "^21.2.0",
     "knip": "^6.31.0",
-    "lefthook": "^2.1.10",
+    "lefthook": "^2.1.17",
     "turbo": "^2.10.9",
     "vitest": "^4.1.10"
   },
